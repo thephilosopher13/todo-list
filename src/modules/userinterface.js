@@ -169,8 +169,6 @@ const elementFactory = (() => {
 
 const elementCreationOnLoadModule = (() => {
 
-
-
     const _createHeader = () => {
         const header = document.createElement('header');
         const h1 = document.createElement('h1');
@@ -294,3 +292,9 @@ const afterLoadDOMManipulationModule = (() => {
     }
 
 })();
+
+const init = () => {
+    loadWebpage();
+}
+
+export default init

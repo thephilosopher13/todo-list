@@ -1,4 +1,4 @@
-import projectModule from "./task"
+import projectModule from "./project"
 
 /* 
 
