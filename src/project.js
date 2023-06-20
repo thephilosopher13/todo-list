@@ -21,7 +21,7 @@ const projectModule = (() => {
 
     ]
 
-    const _projectFactory = (title, taskList) => {
+    const _projectFactory = (title) => {
 
         let taskList = []
 

@@ -23,7 +23,7 @@ TASK MODULE
 const taskModule = (() => {
     const _taskArray = []
 
-    const _taskFactory = (title, description, dueDate, priority, isAccomplished, inProject) => {
+    const _taskFactory = (title, description, dueDate, priority, inProject) => {
 
         let isAccomplished = false;
 
