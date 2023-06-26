@@ -17,15 +17,22 @@ const projectModule = (() => {
     const _projectArray = [
 
         //inbox is a sort of "default" project for tasks not put in other projects
-        { title : 'Inbox'}
+        { 
+            title : 'Inbox',
+            taskList : []
+        }
 
     ]
 
-    const _projectFactory = (title) => {
+    const projectFactory = (title) => {
 
         let taskList = []
 
-        return { title }
+        const getTasklist = () => {
+            return taskList
+        }
+
+        return { title, taskList }
     }
 
     const getProjectArray = () => {
@@ -33,7 +40,8 @@ const projectModule = (() => {
     }
 
     return {
-        getProjectArray
+        getProjectArray,
+        projectFactory
     }
 })();
 

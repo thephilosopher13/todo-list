@@ -1,3 +1,9 @@
+import projectModule from './project'
+import taskModule from './task'
+import toDate from 'date-fns/toDate'
+import { format, compareAsc } from 'date-fns'
+
+
 /*
 
 INTERFACE MODULE (do these with DOM Manipulation)
@@ -196,15 +202,54 @@ const elementCreationOnLoadModule = (() => {
         
         return footer;
     }
+
+    const _createDefaultButtonsDiv = () => {
+        const defaultButtonsDiv = elementFactory.div.cloneNode();
+        const defaultNavh2 = elementFactory.h2.cloneNode();
+        const taskArray = taskModule.getTaskArray();
+        const inboxButton = elementFactory.buttonFactory('inbox-button', "Inbox", afterLoadDOMManipulationModule.generateTable(taskArray))
+        const dueTodayButton = elementFactory.buttonFactory('due-today-button', "Due Today", afterLoadDOMManipulationModule.generateTable(taskArray))
+        const dueThisWeekButton = elementFactory.buttonFactory('due-this-week-button', "Due This Week", afterLoadDOMManipulationModule.generateTable(taskArray))
+        defaultNavh2.textContent = "Home"
+        defaultButtonsDiv.classList.add('default-buttons-div')
+        
+        defaultButtonsDiv.appendChild(homeNavh2)
+        defaultButtonsDiv.appendChild(inboxButton)
+        defaultButtonsDiv.appendChild(dueTodayButton)
+        defaultButtonsDiv.appendChild(dueThisWeekButton)
+
+        return defaultButtonsDiv
+    }
+
+    const _createProjectButtonsDiv = () => {
+        const projectButtonsDiv = elementFactory.div.cloneNode();
+        const projectsNavh2 = elementFactory.h2.cloneNode();
+        //have a project array here
+        //make buttons named after the 'title' property of said projects in array (useful to do a forEach loop)
+
+        projectsNavh2.textContent = "Projects"
+
+        projectButtonsDiv.appendChild(projectsNavh2)
+
+        return projectButtonsDiv
+    }
     
 
     const _createHomeNav = () => {
-        const homeNavh2 = elementFactory.h2.cloneNode();
         const homeNavDiv = elementFactory.div.cloneNode();
-        const newItemuUtton = elementFactory.buttonFactory(newItem, "+", _createContentDiv )
+        const defaultButtonsDiv = _createDefaultButtonsDiv();
+        const projectButtonsDiv = _createProjectButtonsDiv();
 
-        homeNavh2.textContent = "Home"
-        homeNavDiv.classList.add('homeNav')
+        const newItemButton = elementFactory.buttonFactory('newItem', "+", afterLoadDOMManipulationModule.newItemPopup())
+
+        homeNavDiv.classList.add('homeNav');
+
+        homeNavDiv.appendChild(defaultButtonsDiv)
+        homeNavDiv.appendChild()
+
+
+        
+
 
         return homeNavDiv
     }
@@ -251,9 +296,11 @@ const afterLoadDOMManipulationModule = (() => {
 
     const form = document.createElement('form');
     const table = document.createElement('table');
-    const th = document.createElement('th');
-    const tr = document.createElement('tr');
-    const td = document.createElement('td');
+    const theadFactory = document.createElement('thead');
+    const tbodyFactory = document.createElement('tbody')
+    const thFactory = document.createElement('th');
+    const trFactory = document.createElement('tr');
+    const tdFactory = document.createElement('td');
 
     const newItemPopup = () => {
         elementFactory.modalInit();
@@ -268,33 +315,132 @@ const afterLoadDOMManipulationModule = (() => {
         newItemButtonContainer.appendChild(newProjectButton);
         modalContent.appendChild(newItemButtonContainer);
     }
+
+    const _getValueFromInput= (formId, inputId, typeOfValue) => {
+        const formToGetInputFrom = document.getElementById(formId);
+        const inputToGetValueFrom = formToGetInputFrom.getElementById(inputId);
+        const inputValue = inputToGetValueFrom[typeOfValue];
+        
+        return inputValue;
+    }
         
     const _newProjectPopup = () => {
         elementFactory.modalInit();
-        const modalcontent = document.querySelector('.modal-content');
+        const modalContent = document.querySelector('.modal-content');
         const projectForm = form.cloneNode();
         const titleInput = elementFactory.inputFactory(text, Name, projectname, projectname)
-        const projectSubmitButton = elementFactory.buttonFactory(submitProjectForm, 'Submit', _submitProjectData);
+        const projectSubmitButton = elementFactory.buttonFactory("submitProjectForm", 'Submit', _submitProjectData);
+
+        modalContent.innerHTML = '';
+        projectForm.id = projectform
+
+        projectForm.appendChild(titleInput);
+        projectForm.appendChild(projectSubmitButton);
     }
 
     const _submitProjectData = () => {
+        const titleFromProjectForm = _getValueFromInput(projectform, title, value);
+        const projectArray = projectModule.getProjectArray();
 
+        const newProject = projectModule.projectFactory(titleFromProjectForm);
+        projectArray.push(newProject);
     }
 
     const _newTaskPopup = () => {
         elementFactory.modalInit();
-        const modalcontent = document.querySelector('.modal-content');
+
+        const projectArray = projectModule.getProjectArray();
+        const projectTitles = projectArray.map((projectTitleValues) => projectTitleValues.title)
+
+        const modalContent = document.querySelector('.modal-content');
         const taskForm = form.cloneNode();
-        const taskTitleInput = elementFactory.inputFactory(text, Title, taskTitle, taskTitle)
-        const taskDescriptionInput = elementFactory.textAreaFactory(description, 3, 32, Description)
-        const taskDueDateInput = elementFactory.inputFactory(date, Deadline, dueDate, dueDate)
-        const taskPriorityInput = elementFactory.selectionFactory(Priority, Low, Medium, High)
+        const taskTitleInput = elementFactory.inputFactory(text, Title, taskTitle, taskTitle);
+        const taskDescriptionInput = elementFactory.textAreaFactory(description, 3, 32, Description);
+        const taskDueDateInput = elementFactory.inputFactory(date, Deadline, dueDate, dueDate);
+        const taskPriorityInput = elementFactory.selectionFactory(Priority, Low, Medium, High);
+        const inWhichProjectInput = elementFactory.selectionFactory(Project, ...projectTitles)
+        const taskSubmitButton = elementFactory.buttonFactory("submitTaskForm", 'Submit', _submitTaskData);
+
+        modalContent.innerHTML = ''
+        taskForm.id = taskform
+
+        taskForm.appendChild(taskTitleInput);
+        taskForm.appendChild(taskDescriptionInput);
+        taskForm.appendChild(taskDueDateInput);
+        taskForm.appendChild(taskPriorityInput);
+        taskForm.appendChild(taskSubmitButton);
+        taskForm.appendChild(inWhichProjectInput);
+        modalContent.appendChild(taskForm);
+    }
+
+    const _convertDateValueToActualDate = (originalDateString) => {
+        const dateStringWithoutNonNumeric = originalDateString.replace(/\D/g, '');
+        const year = dateStringWithoutNonNumeric.substring(0, 4);
+        const month = (parseInt(dateStringWithoutNonNumeric.substring(4, 6)) - 1).toString()
+        const day = dateStringWithoutNonNumeric.substring(6);
+        const dateInCorrectForm = toDate(new Date(year, month, day))
+
+        return dateInCorrectForm
+    }
+
+
+    const _submitTaskData = () => {
+        const titleFromTaskForm = _getValueFromInput (taskform, title, value)
+        const descriptionFromTaskForm = _getValueFromInput (taskform, description, value)
+        const dueDatefromTaskForm = _getValueFromInput(taskform, dueDate, value);
+        const formattedDate = _convertDateValueToActualDate(dueDatefromTaskForm);
+        const taskPriorityfromTaskForm = _getValueFromInput(taskform, priority, value);
+        const inProjectFromTaskForm = _getValueFromInput(taskform, project, value);
+        const taskArray = taskModule.getTaskArray()
+
+        const newTask = taskModule.taskFactory(titleFromTaskForm, descriptionFromTaskForm, formattedDate, taskPriorityfromTaskForm, inProjectFromTaskForm)
+        taskArray.push(newTask)
+        newTask.linkTaskToProject()
+    }
+
+    const generateTable = (array) => {
+        const table = table.cloneNode()
+        const thead = theadFactory.cloneNode()
+        const headerRow = trFactory.cloneNode()
+        const objectKeys = Object.keys(array[0])
+
+        objectKeys.forEach((key) => { 
+            const th = thFactory.cloneNode()
+            th.textContent = key
+            headerRow.appendChild(thCell);
+        })
+
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const tbody = tbodyFactory.cloneNode()
+        
+        
+        array.forEach((object) => {
+            const row = trFactory.cloneNode()
+            objectKeys.forEach((key) => {
+                const cell = tdFactory.cloneNode();
+                cell.textContent = object[key]
+                row.appendChild(cell);
+            });
+            tbody.appendChild(row);
+        });
+
+        table.appendChild(tbody);
+
+        return table;
+    };
+
+    return {
+        newItemPopup,
+        generateTable
     }
 
 })();
 
 const init = () => {
-    loadWebpage();
+    const taskArray = taskModule.getTaskArray();
+    elementCreationOnLoadModule.loadWebpage();
 }
 
 export default init

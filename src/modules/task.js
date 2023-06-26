@@ -23,7 +23,7 @@ TASK MODULE
 const taskModule = (() => {
     const _taskArray = []
 
-    const _taskFactory = (title, description, dueDate, priority, inProject) => {
+    const taskFactory = (title, description, dueDate, priority, inProject) => {
 
         let isAccomplished = false;
 
@@ -50,5 +50,20 @@ const taskModule = (() => {
 
 
         return { title, description, dueDate, priority, isAccomplished, inProject }
+    }
+
+    const getTaskArray = () => {
+      return _taskArray
+    }
+
+    const taskArrayFilter = (property, desiredPropertyValue) => {
+      const filteredArray = _taskArray.filter((item) => item[property] === desiredPropertyValue);
+      return filteredArray
+    }
+    
+    return {
+      taskFactory,
+      getTaskArray,
+      taskArrayFilter
     }
 })();
