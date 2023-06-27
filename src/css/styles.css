@@ -89,10 +89,13 @@ h2 {
     background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
   }
 
-  .modal-content {
+#modalcontent {
     background-color: #fefefe;
-    margin: auto auto;
     padding: 20px;
     border: 1px solid #888;
-    width: 50%; /* Could be more or less, depending on screen size */
-  }
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: inline-block;
+}
