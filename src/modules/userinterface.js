@@ -134,13 +134,18 @@ const elementFactory = (() => {
     const modalFactory = () => {
         const modal = div.cloneNode();
         const modalContent = div.cloneNode();
-        const body = document.querySelector('body');
 
         modal.classList.add('modal');
-        modalContent.classList.add('modal-content');
+        modalContent.id = 'modalcontent'
 
         modal.appendChild(modalContent);
-        body.appendChild(modal)
+        document.body.appendChild(modal);
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+              modal.style.display = "none";
+            }
+          }
     }
 
     const itemWithClassDeleter = (className) => {
@@ -151,7 +156,7 @@ const elementFactory = (() => {
       };
 
     const modalInit = () => {
-        itemWithClassDeleter(modal)
+        itemWithClassDeleter('modal')
         modalFactory();
     }
 
@@ -207,13 +212,13 @@ const elementCreationOnLoadModule = (() => {
         const defaultButtonsDiv = elementFactory.div.cloneNode();
         const defaultNavh2 = elementFactory.h2.cloneNode();
         const taskArray = taskModule.getTaskArray();
-        const inboxButton = elementFactory.buttonFactory('inbox-button', "Inbox", afterLoadDOMManipulationModule.generateTable(taskArray))
-        const dueTodayButton = elementFactory.buttonFactory('due-today-button', "Due Today", afterLoadDOMManipulationModule.generateTable(taskArray))
-        const dueThisWeekButton = elementFactory.buttonFactory('due-this-week-button', "Due This Week", afterLoadDOMManipulationModule.generateTable(taskArray))
+        const inboxButton = elementFactory.buttonFactory('inbox-button', "Inbox", () => afterLoadDOMManipulationModule.generateTable(taskArray))
+        const dueTodayButton = elementFactory.buttonFactory('due-today-button', "Due Today", () => afterLoadDOMManipulationModule.generateTable(taskArray))
+        const dueThisWeekButton = elementFactory.buttonFactory('due-this-week-button', "Due This Week", () => afterLoadDOMManipulationModule.generateTable(taskArray))
         defaultNavh2.textContent = "Home"
         defaultButtonsDiv.classList.add('default-buttons-div')
         
-        defaultButtonsDiv.appendChild(homeNavh2)
+        defaultButtonsDiv.appendChild(defaultNavh2)
         defaultButtonsDiv.appendChild(inboxButton)
         defaultButtonsDiv.appendChild(dueTodayButton)
         defaultButtonsDiv.appendChild(dueThisWeekButton)
@@ -240,17 +245,14 @@ const elementCreationOnLoadModule = (() => {
         const defaultButtonsDiv = _createDefaultButtonsDiv();
         const projectButtonsDiv = _createProjectButtonsDiv();
 
-        const newItemButton = elementFactory.buttonFactory('newItem', "+", afterLoadDOMManipulationModule.newItemPopup())
+        const newItemButton = elementFactory.buttonFactory('newItem', "+", afterLoadDOMManipulationModule.newItemPopup)
 
         homeNavDiv.classList.add('homeNav');
 
         homeNavDiv.appendChild(defaultButtonsDiv)
-        homeNavDiv.appendChild()
-
-
+        homeNavDiv.appendChild(projectButtonsDiv)
+        homeNavDiv.appendChild(newItemButton)
         
-
-
         return homeNavDiv
     }
 
@@ -294,8 +296,8 @@ const elementCreationOnLoadModule = (() => {
 
 const afterLoadDOMManipulationModule = (() => {
 
-    const form = document.createElement('form');
-    const table = document.createElement('table');
+    const formFactory = document.createElement('form');
+    const tableFactory = document.createElement('table');
     const theadFactory = document.createElement('thead');
     const tbodyFactory = document.createElement('tbody')
     const thFactory = document.createElement('th');
@@ -304,12 +306,15 @@ const afterLoadDOMManipulationModule = (() => {
 
     const newItemPopup = () => {
         elementFactory.modalInit();
-        const modalContent = document.querySelector('.modal-content');
+        const modal = document.querySelector('.modal')
+        modal.style.display = "block"
         const newItemButtonContainer = elementFactory.div.cloneNode();
-        const newTaskButton = elementFactory.buttonFactory(newTask, 'New Task', _newTaskPopup);
-        const newProjectButton = elementFactory.buttonFactory(newProject, 'New Project', _newProjectPopup);
+        const newTaskButton = elementFactory.buttonFactory('newTask', 'New Task', _newTaskPopup);
+        const newProjectButton = elementFactory.buttonFactory('newProject', 'New Project', _newProjectPopup);
 
         newItemButtonContainer.classList.add('newitempopupbuttoncontainer')
+
+        const modalContent = document.getElementById('modalcontent');
 
         newItemButtonContainer.appendChild(newTaskButton);
         newItemButtonContainer.appendChild(newProjectButton);
@@ -326,16 +331,25 @@ const afterLoadDOMManipulationModule = (() => {
         
     const _newProjectPopup = () => {
         elementFactory.modalInit();
-        const modalContent = document.querySelector('.modal-content');
-        const projectForm = form.cloneNode();
-        const titleInput = elementFactory.inputFactory(text, Name, projectname, projectname)
+        const modal = document.querySelector('.modal')
+        modal.style.display = "block"
+        const projectForm = formFactory.cloneNode();
+        const titleInput = elementFactory.inputFactory('text', 'Name', 'projectname', 'projectname')
         const projectSubmitButton = elementFactory.buttonFactory("submitProjectForm", 'Submit', _submitProjectData);
 
-        modalContent.innerHTML = '';
-        projectForm.id = projectform
+        const modalContent = document.getElementById('modalcontent');
+
+
+
+        if (modalContent) {
+            modalContent.innerHTML = '';
+          } 
+
+        projectForm.id = 'projectform'
 
         projectForm.appendChild(titleInput);
         projectForm.appendChild(projectSubmitButton);
+        modalContent.appendChild(projectForm)
     }
 
     const _submitProjectData = () => {
@@ -349,27 +363,30 @@ const afterLoadDOMManipulationModule = (() => {
     const _newTaskPopup = () => {
         elementFactory.modalInit();
 
+        const modal = document.querySelector('.modal')
         const projectArray = projectModule.getProjectArray();
         const projectTitles = projectArray.map((projectTitleValues) => projectTitleValues.title)
 
-        const modalContent = document.querySelector('.modal-content');
-        const taskForm = form.cloneNode();
-        const taskTitleInput = elementFactory.inputFactory(text, Title, taskTitle, taskTitle);
-        const taskDescriptionInput = elementFactory.textAreaFactory(description, 3, 32, Description);
-        const taskDueDateInput = elementFactory.inputFactory(date, Deadline, dueDate, dueDate);
-        const taskPriorityInput = elementFactory.selectionFactory(Priority, Low, Medium, High);
-        const inWhichProjectInput = elementFactory.selectionFactory(Project, ...projectTitles)
+        const taskForm = formFactory.cloneNode();
+        const taskTitleInput = elementFactory.inputFactory('text', 'Title', 'taskTitle', 'taskTitle');
+        const taskDescriptionInput = elementFactory.textAreaFactory('description', 3, 32, 'Description');
+        const taskDueDateInput = elementFactory.inputFactory('date', 'Deadline', 'dueDate', 'dueDate');
+        const taskPriorityInput = elementFactory.selectionFactory('Priority', 'Low', 'Medium', 'High');
+        const inWhichProjectInput = elementFactory.selectionFactory('Project', ...projectTitles)
         const taskSubmitButton = elementFactory.buttonFactory("submitTaskForm", 'Submit', _submitTaskData);
+        const modalContent = document.getElementById('modalcontent');
 
-        modalContent.innerHTML = ''
-        taskForm.id = taskform
+        if (modalContent) {
+            modalContent.innerHTML = '';
+          } 
+        taskForm.id = 'taskform'
 
         taskForm.appendChild(taskTitleInput);
         taskForm.appendChild(taskDescriptionInput);
         taskForm.appendChild(taskDueDateInput);
         taskForm.appendChild(taskPriorityInput);
-        taskForm.appendChild(taskSubmitButton);
         taskForm.appendChild(inWhichProjectInput);
+        taskForm.appendChild(taskSubmitButton);
         modalContent.appendChild(taskForm);
     }
 
@@ -399,7 +416,11 @@ const afterLoadDOMManipulationModule = (() => {
     }
 
     const generateTable = (array) => {
-        const table = table.cloneNode()
+        if (array.length === 0) {
+            return
+        }
+
+        const table = tableFactory.cloneNode()
         const thead = theadFactory.cloneNode()
         const headerRow = trFactory.cloneNode()
         const objectKeys = Object.keys(array[0])
@@ -427,8 +448,6 @@ const afterLoadDOMManipulationModule = (() => {
         });
 
         table.appendChild(tbody);
-
-        return table;
     };
 
     return {

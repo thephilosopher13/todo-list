@@ -1,5 +1,6 @@
 import projectModule from "./project"
 
+
 /* 
 
 TASK MODULE
@@ -39,7 +40,6 @@ const taskModule = (() => {
 
         const linkTaskToProject = () => {
             const matchingProject = projectArray.find(project => project.title === inProject);
-        
             if (matchingProject) {
               if (!matchingProject.task) {
                 matchingProject.task = [];
@@ -67,3 +67,5 @@ const taskModule = (() => {
       taskArrayFilter
     }
 })();
+
+export default taskModule
