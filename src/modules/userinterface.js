@@ -56,7 +56,7 @@ const elementFactory = (() => {
         return selectionOption
     }
 
-    const textAreaFactory = (textAreaId, rows, cols, textAreaLabel) => {
+ /*   const textAreaFactory = (textAreaId, rows, cols, textAreaLabel) => {
         const newTextArea = textArea.cloneNode();
         const newtextAreaLabel = label.cloneNode();
         const newTextAreaDiv = div.cloneNode();
@@ -73,6 +73,8 @@ const elementFactory = (() => {
 
         return newTextAreaDiv
     }
+
+*/
 
     const selectionFactory = (selectionName, ...options) => {
         const newSelection = selection.cloneNode();
@@ -100,7 +102,7 @@ const elementFactory = (() => {
         const inputBoxLabel = label.cloneNode();
 
         inputBox.type = inputType;
-        inputBox.id = inputLabel;
+        inputBox.classList.add = inputLabel;
         inputBoxLabel.for = inputLabel.toLowerCase();
         inputBoxLabel.textContent = inputLabel;
         inputBox.name = inputName;
@@ -369,7 +371,6 @@ const afterLoadDOMManipulationModule = (() => {
 
         const taskForm = formFactory.cloneNode();
         const taskTitleInput = elementFactory.inputFactory('text', 'Title', 'taskTitle', 'taskTitle');
-        const taskDescriptionInput = elementFactory.textAreaFactory('description', 3, 32, 'Description');
         const taskDueDateInput = elementFactory.inputFactory('date', 'Deadline', 'dueDate', 'dueDate');
         const taskPriorityInput = elementFactory.selectionFactory('Priority', 'Low', 'Medium', 'High');
         const inWhichProjectInput = elementFactory.selectionFactory('Project', ...projectTitles)
@@ -403,17 +404,78 @@ const afterLoadDOMManipulationModule = (() => {
 
     const _submitTaskData = () => {
         const titleFromTaskForm = _getValueFromInput (taskform, title, value)
-        const descriptionFromTaskForm = _getValueFromInput (taskform, description, value)
         const dueDatefromTaskForm = _getValueFromInput(taskform, dueDate, value);
         const formattedDate = _convertDateValueToActualDate(dueDatefromTaskForm);
         const taskPriorityfromTaskForm = _getValueFromInput(taskform, priority, value);
         const inProjectFromTaskForm = _getValueFromInput(taskform, project, value);
         const taskArray = taskModule.getTaskArray()
 
-        const newTask = taskModule.taskFactory(titleFromTaskForm, descriptionFromTaskForm, formattedDate, taskPriorityfromTaskForm, inProjectFromTaskForm)
+        const newTask = taskModule.taskFactory(titleFromTaskForm, formattedDate, taskPriorityfromTaskForm, inProjectFromTaskForm)
         taskArray.push(newTask)
         newTask.linkTaskToProject()
     }
+
+    const _createIsAccopmplishedCheckbox = (task, property) => {
+        const checkboxCell = tdFactory.cloneNode();
+        const checkbox = elementFactory.inputFactory('checkbox', 'isAccomplished', 'taskIsAccomplished', false)
+        checkbox.checked = task[property];
+
+        checkbox.addEventListener('change', (event) => {
+            task[property] = event.target.checked;
+          });
+
+        checkboxCell.appendChild(checkbox);
+
+        return checkboxCell
+    }
+
+    const _createCellWithTextContent = (factory, content, rowToAppendCellTo) => {
+        const cell = factory.cloneNode();
+        cell.textContent = content;
+        rowToAppendCellTo.appendChild(cell);
+    }
+
+    const _generateTableHeader = (array) => {
+        const thead = theadFactory.cloneNode()
+        const objectKeys = Object.keys(array[0])
+        const headerRow = trFactory.cloneNode()
+        objectKeys.slice(0, 3).forEach((key) => { 
+            _createCellWithTextContent(thFactory, key, headerRow)
+        })
+        _createCellWithTextContent(thFactory, 'Accomplished?', headerRow)
+        _createCellWithTextContent(thFactory, 'Project', headerRow)
+
+        thead.appendChild(headerRow);
+
+        // create functionality for edit and delete item here
+
+        return thead
+    }
+
+    const _generateTableBody = (array) => {
+        const tbody = tbodyFactory.cloneNode()
+        const objectKeys = Object.keys(array[0])
+
+        array.forEach((object) => {
+            const row = trFactory.cloneNode()
+            objectKeys.slice(0, 3).forEach((key) => {
+                _createCellWithTextContent(tdFactory, object[key], row)
+            });
+            objectKeys.slice(3, 4).forEach((key) => {
+                const checkbox = _createIsAccopmplishedCheckbox(object, key);
+                row.appendChild(checkboxCell);
+            });
+            objectKeys.slice(4, 5).forEach((key) => {
+                _createCellWithTextContent(tdFactory, object[key], row)
+            });
+            tbody.appendChild(row);
+        });
+
+        // create functionality for edit and delete item here
+
+        return tbody
+
+        }
 
     const generateTable = (array) => {
         if (array.length === 0) {
@@ -421,32 +483,10 @@ const afterLoadDOMManipulationModule = (() => {
         }
 
         const table = tableFactory.cloneNode()
-        const thead = theadFactory.cloneNode()
-        const headerRow = trFactory.cloneNode()
-        const objectKeys = Object.keys(array[0])
-
-        objectKeys.forEach((key) => { 
-            const th = thFactory.cloneNode()
-            th.textContent = key
-            headerRow.appendChild(thCell);
-        })
-
-        thead.appendChild(headerRow);
+        const thead = _generateTableHeader(array);
+        const tbody = _generateTableBody(array);
+        
         table.appendChild(thead);
-
-        const tbody = tbodyFactory.cloneNode()
-        
-        
-        array.forEach((object) => {
-            const row = trFactory.cloneNode()
-            objectKeys.forEach((key) => {
-                const cell = tdFactory.cloneNode();
-                cell.textContent = object[key]
-                row.appendChild(cell);
-            });
-            tbody.appendChild(row);
-        });
-
         table.appendChild(tbody);
     };
 
