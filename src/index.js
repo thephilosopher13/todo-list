@@ -1,5 +1,5 @@
 import init from "./modules/userinterface"
 import './css/styles.css';
 
-init();
+document.addEventListener("DOMContentLoaded", init);
 

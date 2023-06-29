@@ -7,18 +7,18 @@ module.exports = {
   output: {
     filename: '[name]-bundle.js',
     path: path.resolve(__dirname, 'dist'),
-    clean: true,
   },
   plugins: [
     new HtmlWebpackPlugin({
       title: 'To-Do List',
       scriptLoading: "defer",
-      inject: false, // prevents adding script tag to html so you may do it manually
     }),
   ],
   devtool: 'inline-source-map',
   devServer: {
     static: './dist',
+    hot: false,
+    liveReload: false,
   },
   module: {
     rules: [
@@ -27,5 +27,8 @@ module.exports = {
         use: ['style-loader', 'css-loader'],
       },
     ],
+  },
+  optimization: {
+    runtimeChunk: 'single',
   },
 };

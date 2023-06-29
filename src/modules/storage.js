@@ -8,6 +8,29 @@ STORAGE MODULE
 
 */
 
+import projectModule from './project'
+import taskModule from './task';
+
 const storageModule = (() => {
 
+    const saveTaskArray = (data) => {
+        localStorage.setItem('taskArray', JSON.stringify(data))
+    }
+
+    const getTaskArray = () => {
+        let taskArray = taskModule.getTaskArray();
+        const storedTaskArray = JSON.parse(localStorage.getItem('taskArray'));
+
+        taskArray = storedTaskArray
+
+        return taskArray
+    }
+
+    return {
+        saveTaskArray,
+        getTaskArray
+    }
+
 })();
+
+export default storageModule

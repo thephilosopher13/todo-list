@@ -1,5 +1,6 @@
 import projectModule from './project'
 import taskModule from './task'
+import storageModule from './storage'
 import toDate from 'date-fns/toDate'
 import { format, compareAsc } from 'date-fns'
 
@@ -45,7 +46,6 @@ const elementFactory = (() => {
     const input = document.createElement('input');
     const span = document.createElement('span');
     const label = document.createElement('label');
-    const textArea = document.createElement('textarea');
     const selection = document.createElement('select');
     const option = document.createElement('option');
 
@@ -55,26 +55,6 @@ const elementFactory = (() => {
         selectionOption.value = value.toLowerCase();
         return selectionOption
     }
-
- /*   const textAreaFactory = (textAreaId, rows, cols, textAreaLabel) => {
-        const newTextArea = textArea.cloneNode();
-        const newtextAreaLabel = label.cloneNode();
-        const newTextAreaDiv = div.cloneNode();
-
-        newTextArea.id = textAreaId;
-        newTextArea.rows = rows;
-        newTextArea.cols = cols;
-
-        newtextAreaLabel.for = textAreaLabel.toLowerCase();
-        newtextAreaLabel.textContent = textAreaLabel;
-
-        newTextAreaDiv.appendChild(newtextAreaLabel);
-        newTextAreaDiv.appendChild(newTextArea);
-
-        return newTextAreaDiv
-    }
-
-*/
 
     const selectionFactory = (selectionName, ...options) => {
         const newSelection = selection.cloneNode();
@@ -105,7 +85,9 @@ const elementFactory = (() => {
         inputBox.type = inputType;
         inputBox.classList.add = inputName;
         inputBoxLabel.for = inputLabel.toLowerCase();
-        inputBoxLabel.textContent = inputLabel;
+        if (inputType !== 'checkbox') {
+            inputBoxLabel.textContent = inputLabel;
+        } 
         inputBox.name = inputName;
         inputBox.value = inputValue;
         inputBoxLabel.for = inputName
@@ -219,9 +201,9 @@ const elementCreationOnLoadModule = (() => {
         const defaultButtonsDiv = elementFactory.div.cloneNode();
         const defaultNavh2 = elementFactory.h2.cloneNode();
         const taskArray = taskModule.getTaskArray();
-        const inboxButton = elementFactory.buttonFactory('inbox-button', "Inbox", () => afterLoadDOMManipulationModule.generateTable(taskArray))
-        const dueTodayButton = elementFactory.buttonFactory('due-today-button', "Due Today", () => afterLoadDOMManipulationModule.generateTable(taskArray))
-        const dueThisWeekButton = elementFactory.buttonFactory('due-this-week-button', "Due This Week", () => afterLoadDOMManipulationModule.generateTable(taskArray))
+        const inboxButton = elementFactory.buttonFactory('inbox-button', "Inbox", () => afterLoadDOMManipulationModule.createTaskList(taskArray))
+        const dueTodayButton = elementFactory.buttonFactory('due-today-button', "Due Today", () => afterLoadDOMManipulationModule.createTaskList(taskArray))
+        const dueThisWeekButton = elementFactory.buttonFactory('due-this-week-button', "Due This Week", () => afterLoadDOMManipulationModule.createTaskList(taskArray))
         defaultNavh2.textContent = "Home"
         defaultButtonsDiv.classList.add('default-buttons-div')
         
@@ -263,9 +245,19 @@ const elementCreationOnLoadModule = (() => {
         return homeNavDiv
     }
 
-    const _createDisplaySection = () => {
-        const displayDiv = elementFactory.div.cloneNode()
+    const _createTasksContainer = () => {
+        const tasksContainerDiv = elementFactory.div.cloneNode()
         
+        tasksContainerDiv.setAttribute('id', 'tasks-container')
+
+        return tasksContainerDiv
+    }
+
+    const _createDisplaySection = () => {
+        const displayDiv = elementFactory.div.cloneNode();
+        const tasksContainerDiv = _createTasksContainer();
+        
+        displayDiv.appendChild(tasksContainerDiv);
         displayDiv.setAttribute('id', 'contentDisplay')
 
         return displayDiv
@@ -304,12 +296,6 @@ const elementCreationOnLoadModule = (() => {
 const afterLoadDOMManipulationModule = (() => {
 
     const formFactory = document.createElement('form');
-    const tableFactory = document.createElement('table');
-    const theadFactory = document.createElement('thead');
-    const tbodyFactory = document.createElement('tbody')
-    const thFactory = document.createElement('th');
-    const trFactory = document.createElement('tr');
-    const tdFactory = document.createElement('td');
 
     const newItemPopup = () => {
         elementFactory.modalInit();
@@ -399,7 +385,7 @@ const afterLoadDOMManipulationModule = (() => {
         const dateStringWithoutNonNumeric = originalDateString.replace(/\D/g, '');
         const year = dateStringWithoutNonNumeric.substring(0, 4);
         const month = (parseInt(dateStringWithoutNonNumeric.substring(4, 6)) - 1).toString()
-        const day = dateStringWithoutNonNumeric.substring(6);
+        const day = ((parseInt(dateStringWithoutNonNumeric.substring(6, 8))) + 1).toString();
         const dateInCorrectForm = toDate(new Date(year, month, day))
 
         return dateInCorrectForm
@@ -412,18 +398,14 @@ const afterLoadDOMManipulationModule = (() => {
         const formattedDate = _convertDateValueToActualDate(dueDatefromTaskForm);
         const taskPriorityfromTaskForm = _getValueFromInput('taskform', 'priority');
         const inProjectFromTaskForm = _getValueFromInput('taskform', 'project');
-        const taskArray = taskModule.getTaskArray()
 
         const newTask = taskModule.taskFactory(titleFromTaskForm, formattedDate, taskPriorityfromTaskForm, inProjectFromTaskForm)
-        taskArray.push(newTask)
-        console.log(newTask)
-        generateTable(taskArray)
+        taskModule.createNewTask(newTask)
     }
 
     const _createIsAccopmplishedCheckbox = (task, property) => {
-        const checkboxCell = tdFactory.cloneNode();
+        const checkboxCell = elementFactory.div.cloneNode();
         const checkbox = elementFactory.inputFactory('checkbox', 'isAccomplished', 'taskIsAccomplished', false)
-        checkbox.textContent = '';
         checkbox.checked = task[property];
 
         checkbox.addEventListener('change', (event) => {
@@ -435,80 +417,72 @@ const afterLoadDOMManipulationModule = (() => {
         return checkboxCell
     }
 
-    const _createCellWithTextContent = (factory, content, rowToAppendCellTo) => {
-        const cell = factory.cloneNode();
-        cell.textContent = content;
-        rowToAppendCellTo.appendChild(cell);
+    const _createTaskObjectPropertyValueDiv = (property, value) => {
+        const valueDiv = elementFactory.div.cloneNode();
+        
+        valueDiv.classList.add = ('task' + property);
+        valueDiv.textContent = value
+
+        return valueDiv
     }
 
-    const _generateTableHeader = (array) => {
-        const thead = theadFactory.cloneNode()
-        const objectKeys = Object.keys(array[0])
-        const headerRow = trFactory.cloneNode()
-        objectKeys.slice(0, 3).forEach((key) => { 
-            _createCellWithTextContent(thFactory, key, headerRow)
-        })
-        _createCellWithTextContent(thFactory, 'Accomplished?', headerRow)
-        _createCellWithTextContent(thFactory, 'Project', headerRow)
+    const _createTaskDiv = (task) => {
+        const keysArray = Object.keys(task);
+        const valuesArray = Object.values(task);
+        const taskDiv = elementFactory.div.cloneNode();
 
-        thead.appendChild(headerRow);
+        for (let i = 0; i < keysArray.length; i++) {
 
-        // create functionality for edit and delete item here
+        const taskProperty = keysArray[i]
+        const taskPropertyValue = valuesArray[i]
+        taskDiv.classList.add('task')
 
-        return thead
+            if (i === 0 || i === 2|| i === 4) {
+                // for first 3 properties, which are straightforward due to having a value that's a string (e.g. dueDate, title, priority) 
+                const taskPropertyValueDiv = _createTaskObjectPropertyValueDiv(taskProperty, taskPropertyValue)
+                taskDiv.appendChild(taskPropertyValueDiv);
+              } else if (i === 3) {
+                // for the checkbox, which needs a special input
+                const isAccomplishedCheckbox = _createIsAccopmplishedCheckbox(task, taskProperty)
+                taskDiv.appendChild(isAccomplishedCheckbox);
+              } else if (i === 1) {
+                const taskPropertyValueDiv = _createTaskObjectPropertyValueDiv(taskProperty, taskPropertyValue.slice(0, 10))
+                taskDiv.appendChild(taskPropertyValueDiv);
+              }
+        };
+
+        return taskDiv
     }
 
-    const _generateTableBody = (array) => {
-        const tbody = tbodyFactory.cloneNode()
-        const objectKeys = Object.keys(array[0])
+    const createTaskList = (array) => {
+        const tasksContainerDiv = document.getElementById('tasks-container')
 
-        array.forEach((object) => {
-            const row = trFactory.cloneNode()
-            objectKeys.slice(0, 3).forEach((key) => {
-                _createCellWithTextContent(tdFactory, object[key], row)
-            });
-            objectKeys.slice(3, 4).forEach((key) => {
-                const checkbox = _createIsAccopmplishedCheckbox(object, key);
-                row.appendChild(checkbox);
-            });
-            objectKeys.slice(4, 5).forEach((key) => {
-                _createCellWithTextContent(tdFactory, object[key], row)
-            });
-            tbody.appendChild(row);
-        });
-
-        // create functionality for edit and delete item here
-
-        return tbody
-
-        }
-
-    const generateTable = (array) => {
-        if (array.length === 0) {
+        if (array == null ) {
             return
         }
+        tasksContainerDiv.innerHTML = ''
+        for (let i = 0; i < array.length; i++) {
+            const currentObject = array[i];
 
-        const table = tableFactory.cloneNode()
-        const thead = _generateTableHeader(array);
-        const tbody = _generateTableBody(array);
-        const contentBox = document.getElementById('contentDisplay')
-        
-        table.appendChild(thead);
-        table.appendChild(tbody);
-        contentBox.appendChild(table);
-
-    };
+            const newTask = _createTaskDiv(currentObject);
+            tasksContainerDiv.appendChild(newTask);
+        }
+    }
 
     return {
         newItemPopup,
-        generateTable
+        createTaskList
     }
 
 })();
 
 const init = () => {
-    const taskArray = taskModule.getTaskArray();
+    taskModule.taskArrayInit();
+    const taskArray = taskModule.getTaskArray()
+
+
     elementCreationOnLoadModule.loadWebpage();
+    afterLoadDOMManipulationModule.createTaskList(taskArray)
 }
 
 export default init

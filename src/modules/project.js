@@ -16,23 +16,15 @@ const projectModule = (() => {
 
     const _projectArray = [
 
-        //inbox is a sort of "default" project for tasks not put in other projects
+        //inbox/'none' is a sort of "default" project for tasks not put in other projects
         { 
-            title : 'Inbox',
-            taskList : []
+            title : 'None',
         }
 
     ]
 
     const projectFactory = (title) => {
-
-        let taskList = []
-
-        const getTasklist = () => {
-            return taskList
-        }
-
-        return { title, taskList }
+        return { title }
     }
 
     const getProjectArray = () => {

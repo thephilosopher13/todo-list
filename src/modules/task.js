@@ -1,4 +1,5 @@
 import projectModule from "./project"
+import storageModule from './storage'
 
 
 /* 
@@ -22,38 +23,39 @@ TASK MODULE
 */
 
 const taskModule = (() => {
-    const _taskArray = []
+  
+    let _taskArray = [];
 
     const taskFactory = (title, dueDate, priority, inProject) => {
 
         let isAccomplished = false;
-
-        const deleteTask = () => {
-            const index = _taskArray.indexOf(this);
-            if (index !== -1) {
-                _taskArray.splice(index, 1);
-                console.log(_taskArray)
-            }
-        }
-        
-        const projectArray = projectModule.getProjectArray;
-
-        const linkTaskToProject = () => {
-            const matchingProject = projectArray.find(project => project.title === inProject);
-            if (matchingProject) {
-              if (!matchingProject.task) {
-                matchingProject.task = [];
-              }
-              matchingProject.task.push(task);
-            }
-          };
-
 
         return { title, dueDate, priority, isAccomplished, inProject }
     }
 
     const getTaskArray = () => {
       return _taskArray
+    }
+
+    const _setTaskArray = (newTaskArray) => {
+      _taskArray = newTaskArray
+    }
+
+    const createNewTask = (newTask) => {
+      _taskArray.push(newTask);
+      storageModule.saveTaskArray(_taskArray)
+    }
+
+    const taskArrayInit = () => {
+      let taskArray = taskModule.getTaskArray();
+      const storedArray = storageModule.getTaskArray();
+
+      if (localStorage.length !== 0) {
+        taskArray = storedArray
+        _setTaskArray(taskArray)
+      } else {
+        return
+      }
     }
 
     const taskArrayFilter = (property, desiredPropertyValue) => {
@@ -64,7 +66,9 @@ const taskModule = (() => {
     return {
       taskFactory,
       getTaskArray,
-      taskArrayFilter
+      taskArrayFilter,
+      createNewTask,
+      taskArrayInit
     }
 })();
 
