@@ -485,9 +485,11 @@ const afterLoadDOMManipulationModule = (() => {
         const table = tableFactory.cloneNode()
         const thead = _generateTableHeader(array);
         const tbody = _generateTableBody(array);
+        const contentBox = document.getElementById(contentDisplay)
         
         table.appendChild(thead);
         table.appendChild(tbody);
+        contentBox.appendChild(table);
     };
 
     return {
