@@ -84,6 +84,7 @@ const elementFactory = (() => {
         newSelection.id = selectionName.toLowerCase();
         selectionLabel.for = newSelection.id;
         selectionLabel.textContent = selectionName;
+        newSelection.name = selectionName.toLowerCase();
 
         options.forEach((optionValue) => {
             const optionElement = _selectionOptionFactory(optionValue);
@@ -102,11 +103,12 @@ const elementFactory = (() => {
         const inputBoxLabel = label.cloneNode();
 
         inputBox.type = inputType;
-        inputBox.classList.add = inputLabel;
+        inputBox.classList.add = inputName;
         inputBoxLabel.for = inputLabel.toLowerCase();
         inputBoxLabel.textContent = inputLabel;
         inputBox.name = inputName;
         inputBox.value = inputValue;
+        inputBoxLabel.for = inputName
 
         inputDiv.appendChild(inputBoxLabel);
         inputDiv.appendChild(inputBox);
@@ -160,6 +162,10 @@ const elementFactory = (() => {
     const modalInit = () => {
         itemWithClassDeleter('modal')
         modalFactory();
+    
+        const modal = document.querySelector('.modal');
+        modal.style.display = "block"
+        
     }
 
     return {
@@ -173,7 +179,6 @@ const elementFactory = (() => {
         modalInit,
         itemWithClassDeleter,
         selectionFactory,
-        textAreaFactory
     }
 
 
@@ -323,31 +328,30 @@ const afterLoadDOMManipulationModule = (() => {
         modalContent.appendChild(newItemButtonContainer);
     }
 
-    const _getValueFromInput= (formId, inputId, typeOfValue) => {
+    const _getValueFromInput = (formId, inputName) => {
         const formToGetInputFrom = document.getElementById(formId);
-        const inputToGetValueFrom = formToGetInputFrom.getElementById(inputId);
-        const inputValue = inputToGetValueFrom[typeOfValue];
+        const inputToGetValueFrom = formToGetInputFrom.querySelector(`[name="${inputName}"]`);
+        const inputValue = inputToGetValueFrom.value;
         
         return inputValue;
     }
         
     const _newProjectPopup = () => {
+
         elementFactory.modalInit();
-        const modal = document.querySelector('.modal')
-        modal.style.display = "block"
+
         const projectForm = formFactory.cloneNode();
         const titleInput = elementFactory.inputFactory('text', 'Name', 'projectname', 'projectname')
         const projectSubmitButton = elementFactory.buttonFactory("submitProjectForm", 'Submit', _submitProjectData);
 
         const modalContent = document.getElementById('modalcontent');
 
-
-
         if (modalContent) {
             modalContent.innerHTML = '';
           } 
 
         projectForm.id = 'projectform'
+        projectForm.for = 'Task'
 
         projectForm.appendChild(titleInput);
         projectForm.appendChild(projectSubmitButton);
@@ -355,7 +359,7 @@ const afterLoadDOMManipulationModule = (() => {
     }
 
     const _submitProjectData = () => {
-        const titleFromProjectForm = _getValueFromInput(projectform, title, value);
+        const titleFromProjectForm = _getValueFromInput('projectform', 'title');
         const projectArray = projectModule.getProjectArray();
 
         const newProject = projectModule.projectFactory(titleFromProjectForm);
@@ -363,12 +367,11 @@ const afterLoadDOMManipulationModule = (() => {
     }
 
     const _newTaskPopup = () => {
+
         elementFactory.modalInit();
 
-        const modal = document.querySelector('.modal')
         const projectArray = projectModule.getProjectArray();
         const projectTitles = projectArray.map((projectTitleValues) => projectTitleValues.title)
-
         const taskForm = formFactory.cloneNode();
         const taskTitleInput = elementFactory.inputFactory('text', 'Title', 'taskTitle', 'taskTitle');
         const taskDueDateInput = elementFactory.inputFactory('date', 'Deadline', 'dueDate', 'dueDate');
@@ -377,13 +380,14 @@ const afterLoadDOMManipulationModule = (() => {
         const taskSubmitButton = elementFactory.buttonFactory("submitTaskForm", 'Submit', _submitTaskData);
         const modalContent = document.getElementById('modalcontent');
 
+        taskForm.for = 'Task'
+
         if (modalContent) {
             modalContent.innerHTML = '';
           } 
         taskForm.id = 'taskform'
 
         taskForm.appendChild(taskTitleInput);
-        taskForm.appendChild(taskDescriptionInput);
         taskForm.appendChild(taskDueDateInput);
         taskForm.appendChild(taskPriorityInput);
         taskForm.appendChild(inWhichProjectInput);
@@ -403,21 +407,23 @@ const afterLoadDOMManipulationModule = (() => {
 
 
     const _submitTaskData = () => {
-        const titleFromTaskForm = _getValueFromInput (taskform, title, value)
-        const dueDatefromTaskForm = _getValueFromInput(taskform, dueDate, value);
+        const titleFromTaskForm = _getValueFromInput ('taskform', 'taskTitle')
+        const dueDatefromTaskForm = _getValueFromInput('taskform', 'dueDate');
         const formattedDate = _convertDateValueToActualDate(dueDatefromTaskForm);
-        const taskPriorityfromTaskForm = _getValueFromInput(taskform, priority, value);
-        const inProjectFromTaskForm = _getValueFromInput(taskform, project, value);
+        const taskPriorityfromTaskForm = _getValueFromInput('taskform', 'priority');
+        const inProjectFromTaskForm = _getValueFromInput('taskform', 'project');
         const taskArray = taskModule.getTaskArray()
 
         const newTask = taskModule.taskFactory(titleFromTaskForm, formattedDate, taskPriorityfromTaskForm, inProjectFromTaskForm)
         taskArray.push(newTask)
-        newTask.linkTaskToProject()
+        console.log(newTask)
+        generateTable(taskArray)
     }
 
     const _createIsAccopmplishedCheckbox = (task, property) => {
         const checkboxCell = tdFactory.cloneNode();
         const checkbox = elementFactory.inputFactory('checkbox', 'isAccomplished', 'taskIsAccomplished', false)
+        checkbox.textContent = '';
         checkbox.checked = task[property];
 
         checkbox.addEventListener('change', (event) => {
@@ -463,7 +469,7 @@ const afterLoadDOMManipulationModule = (() => {
             });
             objectKeys.slice(3, 4).forEach((key) => {
                 const checkbox = _createIsAccopmplishedCheckbox(object, key);
-                row.appendChild(checkboxCell);
+                row.appendChild(checkbox);
             });
             objectKeys.slice(4, 5).forEach((key) => {
                 _createCellWithTextContent(tdFactory, object[key], row)
@@ -485,11 +491,12 @@ const afterLoadDOMManipulationModule = (() => {
         const table = tableFactory.cloneNode()
         const thead = _generateTableHeader(array);
         const tbody = _generateTableBody(array);
-        const contentBox = document.getElementById(contentDisplay)
+        const contentBox = document.getElementById('contentDisplay')
         
         table.appendChild(thead);
         table.appendChild(tbody);
         contentBox.appendChild(table);
+
     };
 
     return {

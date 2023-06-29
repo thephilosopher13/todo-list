@@ -24,7 +24,7 @@ TASK MODULE
 const taskModule = (() => {
     const _taskArray = []
 
-    const taskFactory = (title, description, dueDate, priority, inProject) => {
+    const taskFactory = (title, dueDate, priority, inProject) => {
 
         let isAccomplished = false;
 
@@ -49,7 +49,7 @@ const taskModule = (() => {
           };
 
 
-        return { title, description, dueDate, priority, isAccomplished, inProject }
+        return { title, dueDate, priority, isAccomplished, inProject }
     }
 
     const getTaskArray = () => {
