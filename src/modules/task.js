@@ -1,5 +1,7 @@
 import projectModule from "./project"
 import storageModule from './storage'
+import compareAsc from 'date-fns/compareAsc'
+import add from 'date-fns/add'
 
 
 /* 
@@ -52,20 +54,35 @@ const taskModule = (() => {
     }
 
     const taskArrayInit = () => {
-      let taskArray = getTaskArray();
-      const storedArray = storageModule.getStoredTaskArray();
+      const storedArray = storageModule.getStoreArray(task);
 
-      if (localStorage.length !== 0) {
-        taskArray = storedArray
-        _setTaskArray(taskArray)
+      if (localStorage.getItem('projectArray') !== null) {
+        _setTaskArray(storedArray)
       } else {
         return
       }
     }
 
-    const taskArrayFilter = (property, desiredPropertyValue) => {
-      const filteredArray = _taskArray.filter((item) => item[property] === desiredPropertyValue);
+    const taskArrayFilterForProject = (desiredPropertyValue) => {
+      const filteredArray = _taskArray.filter((item) => item[inProject] === desiredPropertyValue);
       return filteredArray
+    }
+
+    const taskArrayFilterDueDateToday = () => {
+      const arrayWithDueDateToday = _taskArray.filter((item) => compareAsc(item[dueDate], new Date()) === 0 )
+      return arrayWithDueDateToday
+    }
+
+    const taskArrayFilterDueThisWeek = () => {
+      const dayToday = new Date();
+      const dayOneWeekLater = add(new Date(), {
+        days: 7
+      })
+      const arrayWithDueThisWeek = _taskArray.filter((item) => isWithinInterval(item[dueDate], {
+        start: dayToday,
+        end: dayOneWeekLater
+      }) === true )
+      return arrayWithDueThisWeek
     }
     
     return {
@@ -74,7 +91,10 @@ const taskModule = (() => {
       taskArrayFilter,
       createNewTask,
       taskArrayInit,
-      updateTaskArray
+      updateTaskArray, 
+      taskArrayFilterDueDateToday,
+      taskArrayFilterDueThisWeek,
+      taskArrayFilterForProject 
     }
 })();
 

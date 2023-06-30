@@ -2,40 +2,6 @@ import projectModule from './project'
 import taskModule from './task'
 import storageModule from './storage'
 import toDate from 'date-fns/toDate'
-import { format, compareAsc } from 'date-fns'
-
-
-/*
-
-INTERFACE MODULE (do these with DOM Manipulation)
-1. Create a website with a header, footer, sidebar and content div 
-1.1. Sidebar should have :
-1.1.1. a first div that has:
-1.1.1.1."all tasks", 
-1.1.1.2."due today", 
-1.1.1.3."due this week", 
-1.1.1.4."important tasks" 
-1.1.1.5. and "completed tasks"
-1.1.2 second division of the sidebar should have all projects
-1.1.2.1 THis should havea "+" button that pops up a form that creates the Object
-1.1.2.2.  This should have a "title" form and then submit 
-2. have a +"add Task" button on the top-right of the header
-2.1. have this popup a form that has the ff: input
-2.1.1. a "title" input
-2.1.2. a "description" input that has a larger box
-2.1.3. a "due date" one that's a date input
-2.1.4. a "priority" that's a dropdown box of (low, medium, high)
-2.1.5. a "project" dropdown that's either "inbox" or existing projects
-3. have a function that "converts" a toDo object to an item in a table with the ff. cells:
-3.1. the "title" of the toDo item
-3.2. the due date of the toDo item
-3.3. a "details" button that shows you a popUp that shows the item's details
-3.4. a "edit" button that shows a popUp that's like the addProject form
-3.5. a checkbox that let's you toggle whether 
-3.6. a "delete" button that deletes the item
-4. when clicking a project get a function that "gets" the title of the project
-
-*/
 
 const elementFactory = (() => {
 
@@ -228,9 +194,13 @@ const elementCreationOnLoadModule = (() => {
         const defaultButtonsDiv = elementFactory.div.cloneNode();
         const defaultNavh2 = elementFactory.h2.cloneNode();
         const taskArray = taskModule.getTaskArray();
+        
+        const taskArrayDueToday = taskModule.taskArrayFilterDueDateToday();
+        const taskArrayFilterDueThisWeek = taskModule.taskArrayFilterDueThisWeek();
+
         const inboxButton = elementFactory.buttonFactory('inbox-button', "Inbox", () => afterLoadDOMManipulationModule.createTaskList(taskArray))
-        const dueTodayButton = elementFactory.buttonFactory('due-today-button', "Due Today", () => afterLoadDOMManipulationModule.createTaskList(taskArray))
-        const dueThisWeekButton = elementFactory.buttonFactory('due-this-week-button', "Due This Week", () => afterLoadDOMManipulationModule.createTaskList(taskArray))
+        const dueTodayButton = elementFactory.buttonFactory('due-today-button', "Due Today", () => afterLoadDOMManipulationModule.createTaskList(taskArrayDueToday))
+        const dueThisWeekButton = elementFactory.buttonFactory('due-this-week-button', "Due This Week", () => afterLoadDOMManipulationModule.createTaskList(taskArrayFilterDueThisWeek))
         defaultNavh2.textContent = "Home"
         defaultButtonsDiv.classList.add('default-buttons-div')
         
@@ -245,14 +215,26 @@ const elementCreationOnLoadModule = (() => {
     const _createProjectButtonsDiv = () => {
         const projectButtonsDiv = elementFactory.div.cloneNode();
         const projectsNavh2 = elementFactory.h2.cloneNode();
-        //have a project array here
-        //make buttons named after the 'title' property of said projects in array (useful to do a forEach loop)
+        const projectArray = projectArray.getProjectArray();
 
+        projectButtonsDiv.classList.add('project-buttons')
         projectsNavh2.textContent = "Projects"
 
         projectButtonsDiv.appendChild(projectsNavh2)
 
+        projectArray.forEach((object) => {
+            if (object[title] !== 'None') {
+                const projectButton = elementFactory.buttonFactory('project', `${object[title]}`, afterLoadDOMManipulationModule.createTaskList(taskModule.taskArrayFilterForProject(object[title])))
+                projectButtonsDiv.appendChild(projectButton)
+            }
+        })
+
         return projectButtonsDiv
+    }
+
+    const projectButtonsDivFunctionGetter = () => {
+       const projectButtonsDiv =  _createProjectButtonsDiv()
+       return projectButtonsDiv
     }
     
 
@@ -316,6 +298,7 @@ const elementCreationOnLoadModule = (() => {
     }
 
     return {
+        projectButtonsDivFunctionGetter,
         loadWebpage
     }
 })();
@@ -371,10 +354,19 @@ const afterLoadDOMManipulationModule = (() => {
 
     const _submitProjectData = () => {
         const titleFromProjectForm = _getValueFromInput('projectform', 'title');
-        const projectArray = projectModule.getProjectArray();
 
         const newProject = projectModule.projectFactory(titleFromProjectForm);
-        projectArray.push(newProject);
+        projectModule.createNewProject(newProject);
+    }
+
+    const updateProjectButtons = () => {
+        const projectButtonsDiv = document.querySelector('.project-buttons')
+        const homeNavDiv = document.querySelector('.homeNav')
+        projectButtonsDiv.remove()
+
+        const updatedProjectButtonsDiv = elementCreationOnLoadModule.projectButtonsDivFunctionGetter()
+
+        homeNavDiv.appendChild(updatedProjectButtonsDiv)
     }
 
     const _newTaskPopup = () => {

@@ -33,13 +33,29 @@ const projectModule = (() => {
 
     const _setProjectArray = (newProjectArray) => {
         _projectArray = newProjectArray
-      }
+    }
 
-    const _setProjectArray = () => {}
+    const updateProjectArray = (updatedArray) => {
+        _setProjectArray(updatedArray)
+        storageModule.saveArray('projectArray', updatedArray)
+    }
+
+    const projectArrayInit = () => {
+        const storedArray = storageModule.getStoredArray(project);
+
+        if (localStorage.getItem('projectArray') !== null) {
+            _setProjectArray(storedArray)
+          } else {
+            return
+          }
+    }
+
 
     return {
         getProjectArray,
-        projectFactory
+        projectFactory,
+        updateProjectArray,
+        projectArrayInit
     }
 })();
 
