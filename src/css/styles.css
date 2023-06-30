@@ -46,6 +46,11 @@ footer {
     flex-direction: column
 }
 
+.project-buttons {
+    display: flex;
+    flex-direction: column 
+}
+
 #contentDisplay {
     background-color: #D0BCD5;
 }
@@ -54,7 +59,7 @@ h2 {
     font-size: 2rem
 }
 
-.default-buttons-div > button {
+button {
     color: #f5f5f5;
     background-color: #1B1725;
     border: none;
@@ -112,4 +117,9 @@ h2 {
 
 #tasks-container {
     margin: 10%
+}
+
+.svg {
+    height: 1.5rem;
+    width: 1.5rem;
 }

@@ -17,16 +17,22 @@ const storageModule = (() => {
         localStorage.setItem(array, JSON.stringify(data))
     }
 
-    const getStoredArray = (arrayType) => {
-        const storedArray = JSON.parse(localStorage.getItem(`${arrayType}Array`));
+    const getStoredTaskArray = () => {
+        const storedTaskArray = JSON.parse(localStorage.getItem('taskArray'));
 
-        return storedArray
+        return storedTaskArray
     }
 
+    const getStoredProjectArray = () => {
+        const storedProjectArray = JSON.parse(localStorage.getItem('projectArray'));
+
+        return storedProjectArray
+    }
 
     return {
         saveArray,
-        getStoredArray
+        getStoredTaskArray,
+        getStoredProjectArray
     }
 
 })();

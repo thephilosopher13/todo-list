@@ -1,3 +1,5 @@
+import storageModule  from "./storage";
+
 /*
 
 PROJECT MODULE 
@@ -27,10 +29,6 @@ const projectModule = (() => {
         return { title }
     }
 
-    const getProjectArray = () => {
-        return _projectArray
-    }
-
     const _setProjectArray = (newProjectArray) => {
         _projectArray = newProjectArray
     }
@@ -40,8 +38,27 @@ const projectModule = (() => {
         storageModule.saveArray('projectArray', updatedArray)
     }
 
+    const refreshProjectArray = () => {
+        storageModule.saveArray('projectArray', _projectArray)
+    }
+
+    const _findObjectIndex = (array, searchObject) => {
+        return array.findIndex((obj) => obj === searchObject);
+      };
+
+    const createNewProject = (newProject) => {
+        _projectArray.push(newProject);
+        storageModule.saveArray('projectArray', _projectArray)
+    }
+
+    const deleteObject = (object) => {
+        const index = _findObjectIndex(_projectArray, object)
+        _projectArray.splice(index, 1);
+        refreshProjectArray()
+    }
+
     const projectArrayInit = () => {
-        const storedArray = storageModule.getStoredArray(project);
+        const storedArray = storageModule.getStoredProjectArray();
 
         if (localStorage.getItem('projectArray') !== null) {
             _setProjectArray(storedArray)
@@ -50,11 +67,18 @@ const projectModule = (() => {
           }
     }
 
+    const getProjectArray = () => {
+        return _projectArray
+    }
+
+
 
     return {
         getProjectArray,
         projectFactory,
+        createNewProject,
         updateProjectArray,
+        deleteObject,
         projectArrayInit
     }
 })();

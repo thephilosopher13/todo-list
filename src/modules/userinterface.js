@@ -1,6 +1,5 @@
 import projectModule from './project'
 import taskModule from './task'
-import storageModule from './storage'
 import toDate from 'date-fns/toDate'
 
 const elementFactory = (() => {
@@ -84,6 +83,7 @@ const elementFactory = (() => {
     }
 
     const _svgFactory = (title, path) => {
+        const svgDiv = div.cloneNode();
         const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
         svg.setAttribute("viewBox", "0 0 24 24");
@@ -93,11 +93,14 @@ const elementFactory = (() => {
     
         const pathElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
         pathElement.setAttribute("d", path)
+
+        svgDiv.classList.add('svg')
     
         svg.appendChild(titleElement);
         svg.appendChild(pathElement);
+        svgDiv.appendChild(svg)
     
-        return svg
+        return svgDiv;
     }
 
     const createClickableSvg = (svgTitle, svgPath, clickHandler) => {
@@ -151,7 +154,6 @@ const elementFactory = (() => {
         modalInit,
         itemWithClassDeleter,
         selectionFactory,
-        svgFactory,
         formFactory,
         createClickableSvg
     }
@@ -212,10 +214,23 @@ const elementCreationOnLoadModule = (() => {
         return defaultButtonsDiv
     }
 
+    const _createProjectButton = (projectObject) => {
+        const projectButton = elementFactory.buttonFactory('project', `${projectObject.title}`, () => afterLoadDOMManipulationModule.createTaskList(taskModule.taskArrayFilterForProject(projectObject.title)))
+        const deleteProjectSvg = elementFactory.createClickableSvg('delete', 'M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z', () => projectModule.deleteObject(projectObject))
+        const projectButtonAndDeleteButtonDiv = elementFactory.div.cloneNode();
+
+        projectButtonAndDeleteButtonDiv.classList.add('project-and-delete-button-div')
+
+        projectButtonAndDeleteButtonDiv.appendChild(projectButton);
+        projectButtonAndDeleteButtonDiv.appendChild(deleteProjectSvg);
+
+        return projectButtonAndDeleteButtonDiv
+    }
+
     const _createProjectButtonsDiv = () => {
         const projectButtonsDiv = elementFactory.div.cloneNode();
         const projectsNavh2 = elementFactory.h2.cloneNode();
-        const projectArray = projectArray.getProjectArray();
+        const projectArray = projectModule.getProjectArray();
 
         projectButtonsDiv.classList.add('project-buttons')
         projectsNavh2.textContent = "Projects"
@@ -223,9 +238,9 @@ const elementCreationOnLoadModule = (() => {
         projectButtonsDiv.appendChild(projectsNavh2)
 
         projectArray.forEach((object) => {
-            if (object[title] !== 'None') {
-                const projectButton = elementFactory.buttonFactory('project', `${object[title]}`, afterLoadDOMManipulationModule.createTaskList(taskModule.taskArrayFilterForProject(object[title])))
-                projectButtonsDiv.appendChild(projectButton)
+            if (object.title !== 'None') {
+                const projectButton = _createProjectButton(object)
+                projectButtonsDiv.appendChild(projectButton);
             }
         })
 
@@ -242,6 +257,7 @@ const elementCreationOnLoadModule = (() => {
         const homeNavDiv = elementFactory.div.cloneNode();
         const defaultButtonsDiv = _createDefaultButtonsDiv();
         const projectButtonsDiv = _createProjectButtonsDiv();
+
 
         const newItemButton = elementFactory.buttonFactory('newItem', "+", afterLoadDOMManipulationModule.newItemPopup)
 
@@ -353,7 +369,7 @@ const afterLoadDOMManipulationModule = (() => {
     }
 
     const _submitProjectData = () => {
-        const titleFromProjectForm = _getValueFromInput('projectform', 'title');
+        const titleFromProjectForm = _getValueFromInput('projectform', 'projectname');
 
         const newProject = projectModule.projectFactory(titleFromProjectForm);
         projectModule.createNewProject(newProject);
@@ -420,13 +436,14 @@ const afterLoadDOMManipulationModule = (() => {
         taskModule.createNewTask(newTask)
     }
 
-    const _createIsAccopmplishedCheckbox = (task, property) => {
+    const _createIsAccopmplishedCheckbox = (task) => {
         const checkboxCell = elementFactory.div.cloneNode();
         const checkbox = elementFactory.inputFactory('checkbox', 'isAccomplished', 'taskIsAccomplished', false)
-        checkbox.checked = task[property];
+        checkbox.checked = task.isAccomplished;
 
         checkbox.addEventListener('change', (event) => {
-            task[property] = event.target.checked;
+            task.isAccomplished = event.target.checked;
+            taskModule.refreshTaskArray();
           });
 
         checkboxCell.appendChild(checkbox);
@@ -443,11 +460,6 @@ const afterLoadDOMManipulationModule = (() => {
         return valueDiv
     }
 
-    const _deleteTask = (index) => {
-        const taskArray = taskModule.getTaskArray()
-        taskArray.splice(index, 1)
-        taskModule.updateTaskArray(taskArray)
-    }
 
     const _createTaskDiv = (task, index) => {
         const keysArray = Object.keys(task);
@@ -466,7 +478,7 @@ const afterLoadDOMManipulationModule = (() => {
                 taskDiv.appendChild(taskPropertyValueDiv);
               } else if (i === 3) {
                 // for the checkbox, which needs a special input
-                const isAccomplishedCheckbox = _createIsAccopmplishedCheckbox(task, taskProperty)
+                const isAccomplishedCheckbox = _createIsAccopmplishedCheckbox(task)
                 taskDiv.appendChild(isAccomplishedCheckbox);
               } else if (i === 1) {
                 const taskPropertyValueDiv = _createTaskObjectPropertyValueDiv(taskProperty, taskPropertyValue.slice(0, 10))
@@ -475,7 +487,7 @@ const afterLoadDOMManipulationModule = (() => {
         };
 
         const editSvg = elementFactory.createClickableSvg('edit', 'M10 20H6V4H13V9H18V12.1L20 10.1V8L14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H10V20M20.2 13C20.3 13 20.5 13.1 20.6 13.2L21.9 14.5C22.1 14.7 22.1 15.1 21.9 15.3L20.9 16.3L18.8 14.2L19.8 13.2C19.9 13.1 20 13 20.2 13M20.2 16.9L14.1 23H12V20.9L18.1 14.8L20.2 16.9Z')
-        const deleteSvg = elementFactory.createClickableSvg('delete', 'M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z', _deleteTask(index))
+        const deleteSvg = elementFactory.createClickableSvg('delete', 'M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z', () => taskModule.deleteTask(index))
 
         taskDiv.appendChild(editSvg)
         taskDiv.appendChild(deleteSvg)
@@ -499,20 +511,25 @@ const afterLoadDOMManipulationModule = (() => {
         }
     }
 
+    const taskListInit = () => {
+        const taskArray = taskModule.getTaskArray()
+        createTaskList(taskArray)
+    }
+
     return {
         newItemPopup,
-        createTaskList
+        createTaskList,
+        taskListInit
     }
 
 })();
 
 const init = () => {
     taskModule.taskArrayInit();
-    const taskArray = taskModule.getTaskArray()
-
+    projectModule.projectArrayInit();
 
     elementCreationOnLoadModule.loadWebpage();
-    afterLoadDOMManipulationModule.createTaskList(taskArray)
+    afterLoadDOMManipulationModule.taskListInit();
 }
 
 export default init
