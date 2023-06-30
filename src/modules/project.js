@@ -14,7 +14,7 @@ PROJECT MODULE
 
 const projectModule = (() => {
 
-    const _projectArray = [
+    let _projectArray = [
 
         //inbox/'none' is a sort of "default" project for tasks not put in other projects
         { 
@@ -30,6 +30,12 @@ const projectModule = (() => {
     const getProjectArray = () => {
         return _projectArray
     }
+
+    const _setProjectArray = (newProjectArray) => {
+        _projectArray = newProjectArray
+      }
+
+    const _setProjectArray = () => {}
 
     return {
         getProjectArray,

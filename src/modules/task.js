@@ -41,14 +41,19 @@ const taskModule = (() => {
       _taskArray = newTaskArray
     }
 
+    const updateTaskArray = (updatedArray) => {
+      _setTaskArray(updatedArray)
+      storageModule.saveArray('taskArray', updatedArray)
+    }
+
     const createNewTask = (newTask) => {
       _taskArray.push(newTask);
-      storageModule.saveTaskArray(_taskArray)
+      storageModule.saveArray('taskArray', _taskArray)
     }
 
     const taskArrayInit = () => {
-      let taskArray = taskModule.getTaskArray();
-      const storedArray = storageModule.getTaskArray();
+      let taskArray = getTaskArray();
+      const storedArray = storageModule.getStoredTaskArray();
 
       if (localStorage.length !== 0) {
         taskArray = storedArray
@@ -68,7 +73,8 @@ const taskModule = (() => {
       getTaskArray,
       taskArrayFilter,
       createNewTask,
-      taskArrayInit
+      taskArrayInit,
+      updateTaskArray
     }
 })();
 

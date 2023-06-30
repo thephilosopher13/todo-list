@@ -48,6 +48,7 @@ const elementFactory = (() => {
     const label = document.createElement('label');
     const selection = document.createElement('select');
     const option = document.createElement('option');
+    const formFactory = document.createElement('form');
 
     const _selectionOptionFactory = (value) => {
         const selectionOption = option.cloneNode();
@@ -105,16 +106,39 @@ const elementFactory = (() => {
         return newButton
     }
 
-    const _createButtonClickHandler = (button, handleClick) => {
-        button.addEventListener('click', handleClick);
+    const _createElementClickHandler = (element, handleClick) => {
+        element.addEventListener('click', handleClick);
     }
 
     const buttonFactory = (createdButtonClass, buttonText, clickHandler) => {
         const createdButton = _createButtonElement(createdButtonClass, buttonText);
-        
-        _createButtonClickHandler(createdButton, clickHandler);
+        _createElementClickHandler(createdButton, clickHandler);
 
         return createdButton
+    }
+
+    const _svgFactory = (title, path) => {
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        svg.setAttribute("viewBox", "0 0 24 24");
+    
+        const titleElement = document.createElementNS("http://www.w3.org/2000/svg", "title");
+        titleElement.textContent = title;
+    
+        const pathElement = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        pathElement.setAttribute("d", path)
+    
+        svg.appendChild(titleElement);
+        svg.appendChild(pathElement);
+    
+        return svg
+    }
+
+    const createClickableSvg = (svgTitle, svgPath, clickHandler) => {
+        const svg =  _svgFactory(svgTitle, svgPath)
+        _createElementClickHandler(svg, clickHandler)
+        
+        return svg
     }
 
     const modalFactory = () => {
@@ -161,6 +185,9 @@ const elementFactory = (() => {
         modalInit,
         itemWithClassDeleter,
         selectionFactory,
+        svgFactory,
+        formFactory,
+        createClickableSvg
     }
 
 
@@ -295,8 +322,6 @@ const elementCreationOnLoadModule = (() => {
 
 const afterLoadDOMManipulationModule = (() => {
 
-    const formFactory = document.createElement('form');
-
     const newItemPopup = () => {
         elementFactory.modalInit();
         const modal = document.querySelector('.modal')
@@ -326,7 +351,7 @@ const afterLoadDOMManipulationModule = (() => {
 
         elementFactory.modalInit();
 
-        const projectForm = formFactory.cloneNode();
+        const projectForm = elementFactory.formFactory.cloneNode();
         const titleInput = elementFactory.inputFactory('text', 'Name', 'projectname', 'projectname')
         const projectSubmitButton = elementFactory.buttonFactory("submitProjectForm", 'Submit', _submitProjectData);
 
@@ -358,7 +383,7 @@ const afterLoadDOMManipulationModule = (() => {
 
         const projectArray = projectModule.getProjectArray();
         const projectTitles = projectArray.map((projectTitleValues) => projectTitleValues.title)
-        const taskForm = formFactory.cloneNode();
+        const taskForm = elementFactory.formFactory.cloneNode();
         const taskTitleInput = elementFactory.inputFactory('text', 'Title', 'taskTitle', 'taskTitle');
         const taskDueDateInput = elementFactory.inputFactory('date', 'Deadline', 'dueDate', 'dueDate');
         const taskPriorityInput = elementFactory.selectionFactory('Priority', 'Low', 'Medium', 'High');
@@ -426,11 +451,17 @@ const afterLoadDOMManipulationModule = (() => {
         return valueDiv
     }
 
-    const _createTaskDiv = (task) => {
+    const _deleteTask = (index) => {
+        const taskArray = taskModule.getTaskArray()
+        taskArray.splice(index, 1)
+        taskModule.updateTaskArray(taskArray)
+    }
+
+    const _createTaskDiv = (task, index) => {
         const keysArray = Object.keys(task);
         const valuesArray = Object.values(task);
         const taskDiv = elementFactory.div.cloneNode();
-
+        
         for (let i = 0; i < keysArray.length; i++) {
 
         const taskProperty = keysArray[i]
@@ -451,8 +482,15 @@ const afterLoadDOMManipulationModule = (() => {
               }
         };
 
+        const editSvg = elementFactory.createClickableSvg('edit', 'M10 20H6V4H13V9H18V12.1L20 10.1V8L14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H10V20M20.2 13C20.3 13 20.5 13.1 20.6 13.2L21.9 14.5C22.1 14.7 22.1 15.1 21.9 15.3L20.9 16.3L18.8 14.2L19.8 13.2C19.9 13.1 20 13 20.2 13M20.2 16.9L14.1 23H12V20.9L18.1 14.8L20.2 16.9Z')
+        const deleteSvg = elementFactory.createClickableSvg('delete', 'M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z', _deleteTask(index))
+
+        taskDiv.appendChild(editSvg)
+        taskDiv.appendChild(deleteSvg)
+
         return taskDiv
     }
+
 
     const createTaskList = (array) => {
         const tasksContainerDiv = document.getElementById('tasks-container')
@@ -464,7 +502,7 @@ const afterLoadDOMManipulationModule = (() => {
         for (let i = 0; i < array.length; i++) {
             const currentObject = array[i];
 
-            const newTask = _createTaskDiv(currentObject);
+            const newTask = _createTaskDiv(currentObject, i);
             tasksContainerDiv.appendChild(newTask);
         }
     }
