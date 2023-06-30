@@ -13,11 +13,11 @@ import taskModule from './task';
 
 const storageModule = (() => {
 
-    const saveTaskArray = (data) => {
-        localStorage.setItem('taskArray', JSON.stringify(data))
+    const saveArray = (array, data) => {
+        localStorage.setItem(array, JSON.stringify(data))
     }
 
-    const getTaskArray = () => {
+    const getStoredTaskArray = () => {
         let taskArray = taskModule.getTaskArray();
         const storedTaskArray = JSON.parse(localStorage.getItem('taskArray'));
 
@@ -27,8 +27,8 @@ const storageModule = (() => {
     }
 
     return {
-        saveTaskArray,
-        getTaskArray
+        saveArray,
+        getStoredTaskArray
     }
 
 })();
