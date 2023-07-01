@@ -612,7 +612,7 @@ const afterLoadDOMManipulationModule = (() => {
         const taskPropertyValue = valuesArray[i]
         taskDiv.classList.add('task')
 
-            if (i === 0 || i === 2|| i === 4) {
+            if (i < 3|| i === 4) {
                 // for first 3 properties, which are straightforward due to having a value that's a string (e.g. dueDate, title, priority) 
                 const taskPropertyValueDiv = _createTaskObjectPropertyValueDiv(taskProperty, taskPropertyValue)
                 taskDiv.appendChild(taskPropertyValueDiv);
@@ -620,9 +620,6 @@ const afterLoadDOMManipulationModule = (() => {
                 // for the checkbox, which needs a special input
                 const isAccomplishedCheckbox = _createIsAccopmplishedCheckbox(task)
                 taskDiv.appendChild(isAccomplishedCheckbox);
-              } else if (i === 1) {
-                const taskPropertyValueDiv = _createTaskObjectPropertyValueDiv(taskProperty, taskPropertyValue)
-                taskDiv.appendChild(taskPropertyValueDiv);
               }
         };
 
@@ -648,14 +645,45 @@ const afterLoadDOMManipulationModule = (() => {
         clickedButton.classList.add('active')
     }
 
+    const createTaskListHeaderItem = (textContent, itemId) => {
+        const itemDiv = elementFactory.div.cloneNode()
+        itemDiv.textContent = textContent
+        itemDiv.id = itemId
+
+        return itemDiv
+    }
+
+    const _createTaskListHeader = () => {
+        const taskListHeaderDiv = elementFactory.div.cloneNode();
+
+        const taskListHeaderItemObjectArray = [
+            { textContent: 'Name' , itemId: 'task-list-header-name'},
+            { textContent: 'Date Due', itemId: 'task-list-header-due-date'},
+            { textContent: 'Priority', itemId: 'task-list-header-priority'},
+            { textContent: 'Finished?', itemId: 'task-list-header-accomplished'},
+            { textContent: 'Project', itemId: 'task-list-header-project'},
+        ]
+
+        taskListHeaderItemObjectArray.forEach((object) => {
+            const headerItemDiv = createTaskListHeaderItem(object.textContent, object.itemId)
+            taskListHeaderDiv.appendChild(headerItemDiv)
+        })
+
+        return taskListHeaderDiv
+    }
+
 
     const _createTaskList = (array) => {
         const tasksContainerDiv = document.getElementById('tasks-container')
+        const taskListHeader = _createTaskListHeader()
+        
+        taskListHeader.id = 'task-list-header'
 
         if (array == null ) {
             return
         }
         tasksContainerDiv.innerHTML = ''
+        tasksContainerDiv.appendChild(taskListHeader)
         for (let i = 0; i < array.length; i++) {
             const currentObject = array[i];
 

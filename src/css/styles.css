@@ -19,6 +19,7 @@ body {
 
 header, footer {
     background-color: #4a4e69;
+    color: #f5f5f5;
     width: 100%
 }
 
@@ -76,11 +77,6 @@ h2 {
     padding: 1rem;
 }
 
-#taskform > div {
-    display: flex;
-    flex-direction: column;
-}
-
 .newitempopupbuttoncontainer {
     display: flex; 
     gap: 2rem;
@@ -110,6 +106,7 @@ h2 {
 .project-and-delete-button-div {
     display: flex;
     flex-direction: row;
+    justify-content: space-between;
     padding: 1rem;
 }
 
@@ -132,7 +129,7 @@ h2 {
 
 .newItem {
     color: #9a8c98;
-    background-color: f2e9e4;
+    background-color: #f2e9e4;
     border: none;
     border-radius: 50%;
     text-align: center;
@@ -171,24 +168,55 @@ h2 {
     padding: 20px;
 }
 
-.task {
-    display: flex;
-    flex-direction: row;
+.task,
+#task-list-header {
+    display: grid;
+    grid-template-columns: 1.5fr 1.5fr 0.5fr 1fr 1.5fr 0.225fr 0.225fr;
     gap: 10px;
+    gap: 20px;
 }
 
-.task > div {
+#taskform > div,
+#projectForm > div {
+    margin-bottom: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+input[type=text] {
+    width: 20rem;
+}
+
+.task {
+    border-top: 1.5px solid #4a4e69;
+    border-bottom: 1.5px solid #4a4e69;
+}
+
+#task-list-header > div {
+    font-weight: 900;
+}
+
+#task-list-header {
     font-size: 1.5rem
 }
 
+#task-list-header > div,
+.task > div {
+    font-size: 1.5rem;
+    text-align: center;
+}
+
 #tasks-container {
-    margin: 10%
+    margin: 5%
 }
 
 .task > .svg {
     height: 1.5rem;
     width: 1.5rem;
 }
+
+
 
 #modal-header { 
     background-color: #4a4e69;
@@ -204,11 +232,11 @@ h2 {
     width: 1.5rem;
 }
 
+#close-button > svg {
+    fill: #f5f5f5;
+}
+
 #close-button {
     padding: 0.25rem;
 }
 
-
-#close-button > svg {
-
-}
