@@ -14,7 +14,7 @@ TASK MODULE
 2.1. "due tomorrow"
 2.2. "due this week"
 3. another "filter" function that searches for completed tasks
-4. another "filter function that searches for the inProject item and looks for all items in a certain project
+4. another "filter function that searches for the project item and looks for all items in a certain project
 5. editTask function
 6. deleteTask function (put an are you sure popup to this)
 7. getTaskDetails function  that does the ff:
@@ -30,11 +30,11 @@ const taskModule = (() => {
   
     let _taskArray = [];
 
-    const taskFactory = (title, dueDate, priority, inProject) => {
+    const taskFactory = (title, dueDate, priority, project) => {
 
         let isAccomplished = false;
 
-        return { title, dueDate, priority, isAccomplished, inProject }
+        return { title, dueDate, priority, isAccomplished, project }
     }
 
     const getTaskArray = () => {
@@ -77,7 +77,7 @@ const taskModule = (() => {
 
     const taskArrayFilterForProject = (desiredPropertyValue) => {
       const taskArray = getTaskArray()
-      const filteredArray = taskArray.filter((item) => item.inProject === desiredPropertyValue);
+      const filteredArray = taskArray.filter((item) => item.project === desiredPropertyValue);
       return filteredArray
     }
 
