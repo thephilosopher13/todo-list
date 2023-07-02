@@ -1,5 +1,6 @@
 import storageModule  from "./storage";
 import taskModule from "./task";
+import afterLoadDOMManipulationModule from './userinterface'
 
 /*
 
@@ -55,9 +56,9 @@ const projectModule = (() => {
     const deleteObject = (object) => {
         const index = _findObjectIndex(_projectArray, object)
         const objectTitle = object.title
-    
-        _projectArray.splice(index, 1);
+
         taskModule.replaceInProjectValues(objectTitle, 'None')
+        _projectArray.splice(index, 1);
         
         refreshProjectArray()
     }

@@ -1,8 +1,6 @@
 import formatISO from 'date-fns/formatISO'
 import projectModule from './project'
 import taskModule from './task'
-import toDate from 'date-fns/toDate'
-import { el } from 'date-fns/locale';
 
 const elementFactory = (() => {
 
@@ -20,7 +18,7 @@ const elementFactory = (() => {
     const _selectionOptionFactory = (value) => {
         const selectionOption = option.cloneNode();
         selectionOption.textContent = value;
-        selectionOption.value = value.toLowerCase();
+        selectionOption.value = value
         return selectionOption
     }
 
@@ -260,22 +258,16 @@ const elementCreationOnLoadModule = (() => {
         return defaultButtonsDiv
     }
 
-    const deleteProjectButton = (projectObject) => {
-        projectModule.deleteObject(projectObject);
-        const projectButton = document.getElementById(`${projectObject.title}`)
-        projectButton.remove();
-        refreshProjectButtonsDiv();
-    }
-
-
     const _createProjectButton = (projectObject) => {
         const projectButton = elementFactory.buttonFactory('project', `${projectObject.title}`, () => afterLoadDOMManipulationModule.generateTaskListOnClick(projectObject.title, taskModule.taskArrayFilterForProject(projectObject.title)))
-        const deleteProjectSvg = elementFactory.createClickableSvg('delete', 'M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z', () => deleteProjectButton(projectObject))
+        const deleteProjectSvg = elementFactory.createClickableSvg('delete', 'M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z', () => afterLoadDOMManipulationModule.deleteProjectButton(projectObject))
         const projectButtonAndDeleteButtonDiv = elementFactory.div.cloneNode();
 
         projectButtonAndDeleteButtonDiv.classList.add('project-and-delete-button-div')
 
         elementFactory.appendChildrenToParentElement(projectButtonAndDeleteButtonDiv, [projectButton, deleteProjectSvg])
+
+        projectButton.id = projectObject.title
 
         return projectButtonAndDeleteButtonDiv
     }
@@ -290,7 +282,6 @@ const elementCreationOnLoadModule = (() => {
         projectArray.forEach((object) => {
             if (object.title !== 'None') {
                 const projectButton = _createProjectButton(object)
-                projectButton.id = object.title
                 divToAttachTo.appendChild(projectButton);
             }
         })
@@ -404,7 +395,6 @@ const afterLoadDOMManipulationModule = (() => {
 
         const projectArray = projectModule.getProjectArray();
         const checkIfProjectNameAlreadyExists = _checkIfValueAlreadyExists(projectArray, projectNameInput.value);
-        console.log(checkIfProjectNameAlreadyExists)
 
         if (checkIfProjectNameAlreadyExists) {
             alert('Project name already exists!')
@@ -414,7 +404,7 @@ const afterLoadDOMManipulationModule = (() => {
         return true
     }
 
-    const _validateTaskForm = () => {
+    const _validateNewTaskForm = () => {
         const titleInput = document.getElementById("taskTitle");
         const dueDateInput = document.getElementById("dueDate");
 
@@ -437,6 +427,26 @@ const afterLoadDOMManipulationModule = (() => {
 
     }
 
+    const _validateEditTaskForm = () => {
+        const titleInput = document.getElementById("taskTitle");
+        const dueDateInput = document.getElementById("dueDate");
+
+        const taskArray = taskModule.getTaskArray()
+        const checkIfTaskNameAlreadyExists = _checkIfValueAlreadyExists(taskArray, titleInput.value)
+        console.log(checkIfTaskNameAlreadyExists)
+    
+        if (titleInput.value === '') {
+            alert('Please enter a name.')
+            return false
+        } else if (dueDateInput.value === '') {
+            alert('Please enter a due date.')
+            return false;
+        } else {
+            return true
+        }
+
+    }
+
 
     const _createProjectSubmitHandler = (projectForm) => {
         projectForm.addEventListener('submit', (e) => {
@@ -450,16 +460,29 @@ const afterLoadDOMManipulationModule = (() => {
         })
     }
 
-    const _createTaskPopupSubmitHandler = (taskForm, handlerFunction) => {
+    const _createNewTaskPopupSubmitHandler = (taskForm) => {
         taskForm.addEventListener('submit', (e) => {
-            if (!_validateTaskForm()) {
+            if (!_validateNewTaskForm()) {
                 e.preventDefault();
                 return
             } else {
-                handlerFunction
+                _submitNewTaskData();
             }
         })
     }
+
+    const _createEditedTaskPopupSubmitHandler = (taskForm, oldTaskIndex) => {
+        taskForm.addEventListener('submit', (e) => {
+            if (!_validateEditTaskForm()) {
+                e.preventDefault();
+                return
+            } else {
+                _submitEditedTaskData(oldTaskIndex);
+            }
+        })
+    }
+
+
 
     const _contentResetter = (content) => {
         if (content) {
@@ -531,56 +554,48 @@ const afterLoadDOMManipulationModule = (() => {
     const _newTaskPopup = () => {
         const taskForm = _taskPopupFormGenerator('', '', 'Low', 'None')
         const modalContent = document.getElementById('modal-content');
-
-        _createTaskPopupSubmitHandler(taskForm, () =>_submitNewTaskData());
-
+        _createNewTaskPopupSubmitHandler(taskForm)
         modalContent.appendChild(taskForm);
     }
 
     const _editTaskPopup = (object, oldTaskIndex) => {
         const taskForm = _taskPopupFormGenerator(object.title, object.dueDate, object.priority, object.project)
         const modalContent = document.getElementById('modal-content');
-        _createTaskPopupSubmitHandler(taskForm, () => _submitEditedTaskData(oldTaskIndex));
+        _createEditedTaskPopupSubmitHandler(taskForm, oldTaskIndex);
         modalContent.appendChild(taskForm);
     }
 
 
-    const _convertDateValueToActualDate = (originalDateString) => {
-        const dateStringWithoutNonNumeric = originalDateString.replace(/\D/g, '');
-        const year = dateStringWithoutNonNumeric.substring(0, 4);
-        const month = (parseInt(dateStringWithoutNonNumeric.substring(4, 6)) - 1).toString()
-        const day = ((parseInt(dateStringWithoutNonNumeric.substring(6, 8))) + 1).toString();
-        const dateInCorrectForm = formatISO(new Date(year, month, day), { representation: 'date' })
-
-        return dateInCorrectForm
-    }
-
     const _submitNewTaskData = () => {
         const titleFromTaskForm = _getValueFromInput ('taskform', 'taskTitle')
-        const dueDatefromTaskForm = _getValueFromInput('taskform', 'dueDate');
-        const formattedDate = _convertDateValueToActualDate(dueDatefromTaskForm);
+        const originalDueDatefromTaskForm = _getValueFromInput('taskform', 'dueDate');
+        const dueDateWithoutStrings = originalDueDatefromTaskForm.split('-')
+        console.log(dueDateWithoutStrings)
+        const newDueDateFromTaskForm = formatISO(new Date(dueDateWithoutStrings[0], parseInt(dueDateWithoutStrings[1]) - 1, dueDateWithoutStrings[2]), { representation: 'date' })
         const taskPriorityfromTaskForm = _getValueFromInput('taskform', 'priority');
         const projectFromTaskForm = _getValueFromInput('taskform', 'project');
 
-        const newTask = taskModule.taskFactory(titleFromTaskForm, formattedDate, taskPriorityfromTaskForm, projectFromTaskForm)
+        const newTask = taskModule.taskFactory(titleFromTaskForm, newDueDateFromTaskForm, taskPriorityfromTaskForm, projectFromTaskForm)
 
         taskModule.createNewTask(newTask)
         elementFactory.deleteModal()
-        _updateTaskList();
+        updateTaskList();
     }
 
     const _submitEditedTaskData = (oldTaskIndex) => {
         const titleFromTaskForm = _getValueFromInput ('taskform', 'taskTitle')
-        const dueDatefromTaskForm = _getValueFromInput('taskform', 'dueDate');
-        const formattedDate = _convertDateValueToActualDate(dueDatefromTaskForm);
+        const originalDueDatefromTaskForm = _getValueFromInput('taskform', 'dueDate');
+        const dueDateWithoutStrings = originalDueDatefromTaskForm.split('-')
+        console.log(dueDateWithoutStrings)
+        const newDueDateFromTaskForm = formatISO(new Date(dueDateWithoutStrings[0], parseInt(dueDateWithoutStrings[1]) - 1, dueDateWithoutStrings[2]), { representation: 'date' })
         const taskPriorityfromTaskForm = _getValueFromInput('taskform', 'priority');
         const projectFromTaskForm = _getValueFromInput('taskform', 'project');
 
-        const newTask = taskModule.taskFactory(titleFromTaskForm, formattedDate, taskPriorityfromTaskForm, projectFromTaskForm)
+        const newTask = taskModule.taskFactory(titleFromTaskForm, newDueDateFromTaskForm, taskPriorityfromTaskForm, projectFromTaskForm)
 
-        taskModule.insertEditedTask(oldTaskIndex, editedTask)
+        taskModule.insertEditedTask(oldTaskIndex, newTask)
         elementFactory.deleteModal()
-        _updateTaskList();
+        updateTaskList();
     }
 
     const _createIsAccopmplishedCheckbox = (task) => {
@@ -614,11 +629,11 @@ const afterLoadDOMManipulationModule = (() => {
 
     const _deleteTaskClickHandler = (index) => {
         taskModule.deleteTask(index);
-        _updateTaskList();
+        updateTaskList();
     }
 
 
-    const _createTaskDiv = (task, index) => {
+    const _createTaskDiv = (task, deleteIndex) => {
         const keysArray = Object.keys(task);
         const valuesArray = Object.values(task);
         const taskDiv = elementFactory.div.cloneNode();
@@ -637,11 +652,11 @@ const afterLoadDOMManipulationModule = (() => {
                 // for the checkbox, which needs a special input
                 const isAccomplishedCheckbox = _createIsAccopmplishedCheckbox(task)
                 taskDiv.appendChild(isAccomplishedCheckbox);
-              }
+              } 
         };
 
-        const editSvg = elementFactory.createClickableSvg('edit', 'M10 20H6V4H13V9H18V12.1L20 10.1V8L14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H10V20M20.2 13C20.3 13 20.5 13.1 20.6 13.2L21.9 14.5C22.1 14.7 22.1 15.1 21.9 15.3L20.9 16.3L18.8 14.2L19.8 13.2C19.9 13.1 20 13 20.2 13M20.2 16.9L14.1 23H12V20.9L18.1 14.8L20.2 16.9Z', () => _editTaskPopup(task, index))
-        const deleteSvg = elementFactory.createClickableSvg('delete', 'M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z', () => _deleteTaskClickHandler(index))
+        const editSvg = elementFactory.createClickableSvg('edit', 'M10 20H6V4H13V9H18V12.1L20 10.1V8L14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H10V20M20.2 13C20.3 13 20.5 13.1 20.6 13.2L21.9 14.5C22.1 14.7 22.1 15.1 21.9 15.3L20.9 16.3L18.8 14.2L19.8 13.2C19.9 13.1 20 13 20.2 13M20.2 16.9L14.1 23H12V20.9L18.1 14.8L20.2 16.9Z', () => _editTaskPopup(task, deleteIndex))
+        const deleteSvg = elementFactory.createClickableSvg('delete', 'M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z', () => _deleteTaskClickHandler(deleteIndex))
 
         elementFactory.appendChildrenToParentElement(taskDiv, [editSvg, deleteSvg])
 
@@ -652,6 +667,9 @@ const afterLoadDOMManipulationModule = (() => {
         const elements = document.querySelectorAll('.active');
         elements.forEach(function(element) {
             element.classList.remove('active');
+            if (element.classList.contains('project')) {
+                element.parentNode.classList.remove('project-active')
+            }
         })
     }
 
@@ -659,6 +677,9 @@ const afterLoadDOMManipulationModule = (() => {
         const clickedButton = document.getElementById(buttonId)
         _activeIdRemover();
         clickedButton.classList.add('active')
+        if (clickedButton.classList.contains('project')) {
+            clickedButton.parentNode.classList.add('project-active')
+        }
     }
 
     const createTaskListHeaderItem = (textContent, itemId) => {
@@ -713,18 +734,38 @@ const afterLoadDOMManipulationModule = (() => {
         _createTaskList(array)
     }
 
-    const _executeButtonClickHandler = (button) => {
-        const clickEvent = new MouseEvent('click', {
-            bubbles: true,
-            cancelable: true,
-        })
-        button.dispatchEvent(clickEvent)
+    const updateTaskList = () => {
+        const activeButton = document.querySelector('.active')
+        if (activeButton === null) {
+            const taskArray = taskModule.getTaskArray();
+            generateTaskListOnClick('inbox', taskArray)
+        } else if (activeButton.id === 'inbox') {
+            const taskArray = taskModule.getTaskArray();
+            _createTaskList(taskArray)
+            console.log('updating task list...')
+        } else if (activeButton.id === 'due-today') {
+            const taskArrayDueToday = taskModule.taskArrayFilterDueDateToday();
+            _createTaskList(taskArrayDueToday)
+            console.log('updating task list...')
+        } else if (activeButton.id === 'due-this-week') {
+            const taskArrayFilterDueThisWeek = taskModule.taskArrayFilterDueThisWeek();
+            _createTaskList(taskArrayFilterDueThisWeek)
+            console.log('updating task list...')
+        } else if (activeButton.classList.contains('project')) {
+            const projectToLookFor = activeButton.id
+            const taskArray = taskModule.taskArrayFilterForProject(projectToLookFor)
+            _createTaskList(taskArray)
+            console.log('updating task list...')
+        }
     }
 
-    const _updateTaskList = () => {
-        const activeButton = document.querySelector('.active')
-        _executeButtonClickHandler(activeButton)
+    const deleteProjectButton = (projectObject) => {
+        projectModule.deleteObject(projectObject);
+        const projectButton = document.getElementById(`${projectObject.title}`)
+        projectButton.parentNode.remove();
+        updateTaskList();
     }
+
 
     const taskListInit = () => {
         const taskArray = taskModule.getTaskArray();
@@ -737,7 +778,8 @@ const afterLoadDOMManipulationModule = (() => {
     return {
         newItemPopup,
         generateTaskListOnClick,
-        taskListInit
+        taskListInit,
+        deleteProjectButton
     }
 
 })();
