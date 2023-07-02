@@ -507,6 +507,8 @@ const afterLoadDOMManipulationModule = (() => {
     const _taskPopupFormGenerator = (defaultTitleValue, defaultDueDateValue, defaultPriorityValue, defaultProjectValue) => {
 
         elementFactory.modalInit();
+
+        const modalContent = document.getElementById('modal-content');
         _contentResetter(modalContent)
 
         const projectArray = projectModule.getProjectArray();
@@ -530,7 +532,7 @@ const afterLoadDOMManipulationModule = (() => {
         const taskForm = _taskPopupFormGenerator('', '', 'Low', 'None')
         const modalContent = document.getElementById('modal-content');
 
-        _createTaskPopupSubmitHandler(taskForm, _insertNewTask);
+        _createTaskPopupSubmitHandler(taskForm, () =>_submitNewTaskData());
 
         modalContent.appendChild(taskForm);
     }
@@ -538,7 +540,7 @@ const afterLoadDOMManipulationModule = (() => {
     const _editTaskPopup = (object, oldTaskIndex) => {
         const taskForm = _taskPopupFormGenerator(object.title, object.dueDate, object.priority, object.project)
         const modalContent = document.getElementById('modal-content');
-        _createTaskPopupSubmitHandler(taskForm, _insertEditedTask, oldTaskIndex);
+        _createTaskPopupSubmitHandler(taskForm, () => _submitEditedTaskData(oldTaskIndex));
         modalContent.appendChild(taskForm);
     }
 
@@ -553,7 +555,7 @@ const afterLoadDOMManipulationModule = (() => {
         return dateInCorrectForm
     }
 
-    const _submitTaskData = () => {
+    const _submitNewTaskData = () => {
         const titleFromTaskForm = _getValueFromInput ('taskform', 'taskTitle')
         const dueDatefromTaskForm = _getValueFromInput('taskform', 'dueDate');
         const formattedDate = _convertDateValueToActualDate(dueDatefromTaskForm);
@@ -562,18 +564,20 @@ const afterLoadDOMManipulationModule = (() => {
 
         const newTask = taskModule.taskFactory(titleFromTaskForm, formattedDate, taskPriorityfromTaskForm, projectFromTaskForm)
 
-        return newTask
-    }
-
-    const _insertNewTask = () => {
-        const newTask = _submitTaskData()
         taskModule.createNewTask(newTask)
         elementFactory.deleteModal()
         _updateTaskList();
     }
 
-    const _insertEditedTask = (oldTaskIndex) => {
-        const editedTask = _submitTaskData()
+    const _submitEditedTaskData = (oldTaskIndex) => {
+        const titleFromTaskForm = _getValueFromInput ('taskform', 'taskTitle')
+        const dueDatefromTaskForm = _getValueFromInput('taskform', 'dueDate');
+        const formattedDate = _convertDateValueToActualDate(dueDatefromTaskForm);
+        const taskPriorityfromTaskForm = _getValueFromInput('taskform', 'priority');
+        const projectFromTaskForm = _getValueFromInput('taskform', 'project');
+
+        const newTask = taskModule.taskFactory(titleFromTaskForm, formattedDate, taskPriorityfromTaskForm, projectFromTaskForm)
+
         taskModule.insertEditedTask(oldTaskIndex, editedTask)
         elementFactory.deleteModal()
         _updateTaskList();
