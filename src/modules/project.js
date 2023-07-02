@@ -1,4 +1,5 @@
 import storageModule  from "./storage";
+import taskModule from "./task";
 
 /*
 
@@ -56,6 +57,8 @@ const projectModule = (() => {
         const objectTitle = object.title
     
         _projectArray.splice(index, 1);
+        taskModule.replaceInProjectValues(objectTitle, 'None')
+        
         refreshProjectArray()
     }
 

@@ -80,6 +80,20 @@ const taskModule = (() => {
       }
     }
 
+    const _createUpdatedArray = (valueToReplace, changedValue) => {
+      return _taskArray.map((item) => {
+        if (item.inProject === valueToReplace) {
+          return {...item, inProject: changedValue};
+        }
+      return item
+      })
+    }
+
+    const replaceInProjectValues = (valueToReplace, changedValue) => {
+      const updatedArray = _createUpdatedArray(valueToReplace, changedValue)
+      updateTaskArray(updatedArray)
+    }
+
     const taskArrayFilterForProject = (desiredPropertyValue) => {
       const taskArray = getTaskArray()
       const filteredArray = taskArray.filter((item) => item.project === desiredPropertyValue);
@@ -117,7 +131,8 @@ const taskModule = (() => {
       taskArrayFilterForProject,
       refreshTaskArray,
       deleteTask,
-      insertEditedTask
+      insertEditedTask,
+      replaceInProjectValues
     }
 })();
 
