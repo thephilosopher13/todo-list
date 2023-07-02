@@ -53,6 +53,8 @@ const projectModule = (() => {
 
     const deleteObject = (object) => {
         const index = _findObjectIndex(_projectArray, object)
+        const objectTitle = object.title
+    
         _projectArray.splice(index, 1);
         refreshProjectArray()
     }

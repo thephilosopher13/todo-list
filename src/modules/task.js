@@ -65,6 +65,11 @@ const taskModule = (() => {
       storageModule.saveArray('taskArray', _taskArray)
     }
 
+    const insertEditedTask = (oldTaskIndex, newTask) => {
+      _taskArray.splice(oldTaskIndex, 1, newTask)
+      refreshTaskArray();
+    }
+
     const taskArrayInit = () => {
       const storedArray = storageModule.getStoredTaskArray();
 
@@ -111,7 +116,8 @@ const taskModule = (() => {
       taskArrayFilterDueThisWeek,
       taskArrayFilterForProject,
       refreshTaskArray,
-      deleteTask
+      deleteTask,
+      insertEditedTask
     }
 })();
 

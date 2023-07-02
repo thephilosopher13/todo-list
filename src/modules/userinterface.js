@@ -24,7 +24,17 @@ const elementFactory = (() => {
         return selectionOption
     }
 
-    const selectionFactory = (selectionName, ...options) => {
+    const appendChildrenToParentElement = (parentElement, arrayOfChildren) => {
+        if (arrayOfChildren.length === 0) {
+            return
+        } else {
+            for (let i = 0; i < arrayOfChildren.length; i++) {
+                parentElement.appendChild(arrayOfChildren[i])
+            }
+        }
+    }
+
+    const selectionFactory = (selectionName, selectionDefaultValue, ...options) => {
         const newSelection = selection.cloneNode();
         const selectionLabel = label.cloneNode();
         const selectionDiv = div.cloneNode();
@@ -33,15 +43,16 @@ const elementFactory = (() => {
         selectionLabel.htmlFor = selectionName.toLowerCase();
         selectionLabel.textContent = selectionName;
         newSelection.name = selectionName.toLowerCase();
+        newSelection.value = selectionDefaultValue
+
 
         options.forEach((optionValue) => {
             const optionElement = _selectionOptionFactory(optionValue);
             newSelection.appendChild(optionElement);
         });
 
-        selectionDiv.appendChild(selectionLabel);
-        selectionDiv.appendChild(newSelection);
-        
+        appendChildrenToParentElement(selectionDiv, [selectionLabel, newSelection])
+
         return selectionDiv;
     }
 
@@ -62,8 +73,7 @@ const elementFactory = (() => {
         inputBox.value = inputValue;
         inputBoxLabel.for = inputName
 
-        inputDiv.appendChild(inputBoxLabel);
-        inputDiv.appendChild(inputBox);
+        appendChildrenToParentElement(inputDiv, [inputBoxLabel, inputBox])
 
         return inputDiv;
     }
@@ -108,9 +118,8 @@ const elementFactory = (() => {
         pathElement.setAttribute("d", path)
 
         svgDiv.classList.add('svg')
-    
-        svg.appendChild(titleElement);
-        svg.appendChild(pathElement);
+
+        appendChildrenToParentElement(svg, [titleElement, pathElement])
         svgDiv.appendChild(svg)
     
         return svgDiv;
@@ -145,10 +154,8 @@ const elementFactory = (() => {
         modalBox.id = 'modal-box'
         modalContent.id = 'modal-content'
 
-        modalBox.appendChild(modalHeader);
-        modalBox.appendChild(modalContent);
+        appendChildrenToParentElement(modalBox, [modalHeader, modalContent])
         modal.appendChild(modalBox)
-        
         document.body.appendChild(modal);
 
         window.onclick = function(event) {
@@ -191,7 +198,8 @@ const elementFactory = (() => {
         selectionFactory,
         formFactory,
         createClickableSvg,
-        createSubmitInput
+        createSubmitInput,
+        appendChildrenToParentElement
 
     }
 
@@ -210,9 +218,8 @@ const elementCreationOnLoadModule = (() => {
         logoDiv.classList.add("logo");
 
         h1.textContent = "To-Do"
-        
-        logoDiv.appendChild(logoSpan);
-        logoDiv.appendChild(h1);
+
+        elementFactory.appendChildrenToParentElement(logoDiv, [logoSpan, h1])
         header.appendChild(logoDiv);
 
         return header
@@ -247,11 +254,8 @@ const elementCreationOnLoadModule = (() => {
 
         defaultNavh2.textContent = "Home"
         defaultButtonsDiv.classList.add('default-buttons-div')
-        
-        defaultButtonsDiv.appendChild(defaultNavh2)
-        defaultButtonsDiv.appendChild(inboxButton)
-        defaultButtonsDiv.appendChild(dueTodayButton)
-        defaultButtonsDiv.appendChild(dueThisWeekButton)
+
+        elementFactory.appendChildrenToParentElement(defaultButtonsDiv, [defaultNavh2, inboxButton, dueTodayButton, dueThisWeekButton])
 
         return defaultButtonsDiv
     }
@@ -271,8 +275,7 @@ const elementCreationOnLoadModule = (() => {
 
         projectButtonAndDeleteButtonDiv.classList.add('project-and-delete-button-div')
 
-        projectButtonAndDeleteButtonDiv.appendChild(projectButton);
-        projectButtonAndDeleteButtonDiv.appendChild(deleteProjectSvg);
+        elementFactory.appendChildrenToParentElement(projectButtonAndDeleteButtonDiv, [projectButton, deleteProjectSvg])
 
         return projectButtonAndDeleteButtonDiv
     }
@@ -314,16 +317,12 @@ const elementCreationOnLoadModule = (() => {
         const homeNavDiv = elementFactory.div.cloneNode();
         const defaultButtonsDiv = _createDefaultButtonsDiv();
         const projectButtonsDiv = _createProjectButtonsDiv();
-
-
         const newItemButton = elementFactory.buttonFactory('newItem', "+", afterLoadDOMManipulationModule.newItemPopup)
 
         homeNavDiv.id = 'homeNav';
 
-        homeNavDiv.appendChild(defaultButtonsDiv)
-        homeNavDiv.appendChild(projectButtonsDiv)
-        homeNavDiv.appendChild(newItemButton)
-        
+        elementFactory.appendChildrenToParentElement(homeNavDiv, [defaultButtonsDiv, projectButtonsDiv, newItemButton])
+
         return homeNavDiv
     }
 
@@ -352,8 +351,7 @@ const elementCreationOnLoadModule = (() => {
 
         contentDiv.setAttribute('id', 'content')
 
-        contentDiv.appendChild(homeNav)
-        contentDiv.appendChild(contentDisplay)
+        elementFactory.appendChildrenToParentElement(contentDiv, [homeNav, contentDisplay])
         
         return contentDiv
     }
@@ -364,10 +362,7 @@ const elementCreationOnLoadModule = (() => {
         const footer = _createFooter();
         const body = document.querySelector('body');
 
-        body.appendChild(header);
-        body.appendChild(content);
-        body.appendChild(footer);
-
+        elementFactory.appendChildrenToParentElement(body, [header, content, footer])
     }
 
     return {
@@ -383,17 +378,16 @@ const afterLoadDOMManipulationModule = (() => {
         const modal = document.querySelector('.modal')
         modal.style.display = "block"
         const newItemButtonContainer = elementFactory.div.cloneNode();
-        const newTaskButton = elementFactory.buttonFactory('newTask', 'New Task', _newTaskPopup);
+        const newTaskButton = elementFactory.buttonFactory('newTask', 'New Task', () => _newTaskPopup());
         const newProjectButton = elementFactory.buttonFactory('newProject', 'New Project', _newProjectPopup);
 
         newItemButtonContainer.classList.add('newitempopupbuttoncontainer')
 
         const modalContent = document.getElementById('modal-content');
         
-
-        newItemButtonContainer.appendChild(newTaskButton);
-        newItemButtonContainer.appendChild(newProjectButton);
+        elementFactory.appendChildrenToParentElement(newItemButtonContainer, [newTaskButton, newProjectButton])
         modalContent.appendChild(newItemButtonContainer);
+
     }
 
     const _checkIfValueAlreadyExists = (array, value) => {
@@ -456,15 +450,21 @@ const afterLoadDOMManipulationModule = (() => {
         })
     }
 
-    const _createTaskSubmitHandler = (taskForm) => {
+    const _createTaskPopupSubmitHandler = (taskForm, handlerFunction) => {
         taskForm.addEventListener('submit', (e) => {
             if (!_validateTaskForm()) {
                 e.preventDefault();
                 return
             } else {
-                _submitTaskData()
+                handlerFunction
             }
         })
+    }
+
+    const _contentResetter = (content) => {
+        if (content) {
+            content.innerHTML = ''
+        }
     }
 
     const _getValueFromInput = (formId, inputName) => {
@@ -485,17 +485,13 @@ const afterLoadDOMManipulationModule = (() => {
 
         const modalContent = document.getElementById('modal-content');
 
-        if (modalContent) {
-            modalContent.innerHTML = '';
-          } 
+        _contentResetter(modalContent)
 
         projectForm.id = 'projectForm'
-        projectForm.for = 'Task'
+        projectForm.for = 'project'
 
         _createProjectSubmitHandler(projectForm)
-
-        projectForm.appendChild(titleInput);
-        projectForm.appendChild(projectSubmitButton);
+        elementFactory.appendChildrenToParentElement(projectForm, [titleInput, projectSubmitButton])
         modalContent.appendChild(projectForm);
     }
 
@@ -508,36 +504,42 @@ const afterLoadDOMManipulationModule = (() => {
         elementFactory.deleteModal()
         }
 
-    const _newTaskPopup = () => {
+    const _taskPopupFormGenerator = (defaultTitleValue, defaultDueDateValue, defaultPriorityValue, defaultProjectValue) => {
 
         elementFactory.modalInit();
+        _contentResetter(modalContent)
 
         const projectArray = projectModule.getProjectArray();
         const projectTitles = projectArray.map((projectTitleValues) => projectTitleValues.title)
         const taskForm = elementFactory.formFactory.cloneNode();
-        const taskTitleInput = elementFactory.inputFactory('text', 'Title', 'taskTitle', '');
-        const taskDueDateInput = elementFactory.inputFactory('date', 'Deadline', 'dueDate', new Date());
-        const taskPriorityInput = elementFactory.selectionFactory('Priority', 'Low', 'Medium', 'High');
-        const inWhichProjectInput = elementFactory.selectionFactory('Project', ...projectTitles)
-        const modalContent = document.getElementById('modal-content');
+        const taskTitleInput = elementFactory.inputFactory('text', 'Title', 'taskTitle', defaultTitleValue);
+        const taskDueDateInput = elementFactory.inputFactory('date', 'Deadline', 'dueDate', defaultDueDateValue);
+        const taskPriorityInput = elementFactory.selectionFactory('Priority', defaultPriorityValue, 'Low', 'Medium', 'High');
+        const inWhichProjectInput = elementFactory.selectionFactory('Project', defaultProjectValue, ...projectTitles)
         const taskSubmitButton = elementFactory.createSubmitInput();
 
-        taskForm.for = 'Task'
-
-        if (modalContent) {
-            modalContent.innerHTML = '';
-          } 
+        taskForm.for = 'task'
         taskForm.id = 'taskform'
 
-        _createTaskSubmitHandler(taskForm);
+        elementFactory.appendChildrenToParentElement(taskForm, [taskTitleInput, taskDueDateInput, taskPriorityInput, inWhichProjectInput, taskSubmitButton])
 
-        taskForm.appendChild(taskTitleInput);
-        taskForm.appendChild(taskDueDateInput);
-        taskForm.appendChild(taskPriorityInput);
-        taskForm.appendChild(inWhichProjectInput);
-        taskForm.appendChild(taskSubmitButton);
+        return taskForm
+    }
+
+    const _newTaskPopup = () => {
+        const taskForm = _taskPopupFormGenerator('', '', 'Low', 'None')
+        const modalContent = document.getElementById('modal-content');
+
+        _createTaskPopupSubmitHandler(taskForm, _insertNewTask);
+
         modalContent.appendChild(taskForm);
-        
+    }
+
+    const _editTaskPopup = (object, oldTaskIndex) => {
+        const taskForm = _taskPopupFormGenerator(object.title, object.dueDate, object.priority, object.project)
+        const modalContent = document.getElementById('modal-content');
+        _createTaskPopupSubmitHandler(taskForm, _insertEditedTask, oldTaskIndex);
+        modalContent.appendChild(taskForm);
     }
 
 
@@ -558,10 +560,21 @@ const afterLoadDOMManipulationModule = (() => {
         const taskPriorityfromTaskForm = _getValueFromInput('taskform', 'priority');
         const projectFromTaskForm = _getValueFromInput('taskform', 'project');
 
- 
         const newTask = taskModule.taskFactory(titleFromTaskForm, formattedDate, taskPriorityfromTaskForm, projectFromTaskForm)
+
+        return newTask
+    }
+
+    const _insertNewTask = () => {
+        const newTask = _submitTaskData()
         taskModule.createNewTask(newTask)
-    
+        elementFactory.deleteModal()
+        _updateTaskList();
+    }
+
+    const _insertEditedTask = (oldTaskIndex) => {
+        const editedTask = _submitTaskData()
+        taskModule.insertEditedTask(oldTaskIndex, editedTask)
         elementFactory.deleteModal()
         _updateTaskList();
     }
@@ -623,11 +636,10 @@ const afterLoadDOMManipulationModule = (() => {
               }
         };
 
-        const editSvg = elementFactory.createClickableSvg('edit', 'M10 20H6V4H13V9H18V12.1L20 10.1V8L14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H10V20M20.2 13C20.3 13 20.5 13.1 20.6 13.2L21.9 14.5C22.1 14.7 22.1 15.1 21.9 15.3L20.9 16.3L18.8 14.2L19.8 13.2C19.9 13.1 20 13 20.2 13M20.2 16.9L14.1 23H12V20.9L18.1 14.8L20.2 16.9Z')
+        const editSvg = elementFactory.createClickableSvg('edit', 'M10 20H6V4H13V9H18V12.1L20 10.1V8L14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H10V20M20.2 13C20.3 13 20.5 13.1 20.6 13.2L21.9 14.5C22.1 14.7 22.1 15.1 21.9 15.3L20.9 16.3L18.8 14.2L19.8 13.2C19.9 13.1 20 13 20.2 13M20.2 16.9L14.1 23H12V20.9L18.1 14.8L20.2 16.9Z', () => _editTaskPopup(task, index))
         const deleteSvg = elementFactory.createClickableSvg('delete', 'M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z', () => _deleteTaskClickHandler(index))
 
-        taskDiv.appendChild(editSvg)
-        taskDiv.appendChild(deleteSvg)
+        elementFactory.appendChildrenToParentElement(taskDiv, [editSvg, deleteSvg])
 
         return taskDiv
     }
