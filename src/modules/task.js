@@ -59,8 +59,9 @@ const taskModule = (() => {
     }
   };
 
+  // eslint-disable-next-line arrow-body-style
   const _createUpdatedArray = (valueToReplace, changedValue) => {
-    _taskArray.map((item) => {
+    return _taskArray.map((item) => {
       if (item.project === valueToReplace) {
         return { ...item, project: changedValue };
       }

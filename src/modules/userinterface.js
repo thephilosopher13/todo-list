@@ -273,17 +273,23 @@ const elementCreationOnLoadModule = (() => {
 
   const _createProjectButton = (projectObject) => {
     const projectButton = elementFactory.buttonFactory('project', `${projectObject.title}`, () => afterLoadDOMManipulationModule.generateTaskListOnClick(projectObject.title, taskModule.taskArrayFilterForProject(projectObject.title)));
+    const editProjectSvg = elementFactory.createClickableSvg('edit', 'M10 20H6V4H13V9H18V12.1L20 10.1V8L14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H10V20M20.2 13C20.3 13 20.5 13.1 20.6 13.2L21.9 14.5C22.1 14.7 22.1 15.1 21.9 15.3L20.9 16.3L18.8 14.2L19.8 13.2C19.9 13.1 20 13 20.2 13M20.2 16.9L14.1 23H12V20.9L18.1 14.8L20.2 16.9Z', () => afterLoadDOMManipulationModule.editProjectPopup(projectObject));
     const deleteProjectSvg = elementFactory.createClickableSvg('delete', 'M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z', () => afterLoadDOMManipulationModule.deleteProjectButton(projectObject));
-    const projectButtonAndDeleteButtonDiv = elementFactory.div.cloneNode();
-    const childrenToAppend = [projectButton, deleteProjectSvg];
+    const projectButtonEditAndDeleteButtonDiv = elementFactory.div.cloneNode();
+    const childrenToAppend = [projectButton, editProjectSvg, deleteProjectSvg];
 
-    projectButtonAndDeleteButtonDiv.classList.add('project-and-delete-button-div');
+    projectButtonEditAndDeleteButtonDiv.classList.add('project-and-edit-and-delete-button-div');
 
-    elementFactory.appendChildrenToParentElement(projectButtonAndDeleteButtonDiv, childrenToAppend);
+    elementFactory.appendChildrenToParentElement(projectButtonEditAndDeleteButtonDiv, childrenToAppend);
 
     projectButton.id = projectObject.title;
 
-    return projectButtonAndDeleteButtonDiv;
+    return projectButtonEditAndDeleteButtonDiv;
+  };
+
+  const getCreateProjectButton = (projectObject) => {
+    const button = _createProjectButton(projectObject);
+    return button;
   };
 
   const _createProjectButtonsDivContent = (divToAttachTo) => {
@@ -372,6 +378,7 @@ const elementCreationOnLoadModule = (() => {
 
   return {
     refreshProjectButtonsDiv,
+    getCreateProjectButton,
     loadWebpage,
   };
 })();
@@ -396,8 +403,7 @@ const afterLoadDOMManipulationModule = (() => {
 
   const _checkIfValueAlreadyExists = (array, value) => array.some((item) => item.title === value);
 
-  const _validateProjectForm = () => {
-    const projectInput = document.getElementById('projectTitle');
+  const _validateNewProjectForm = (projectInput) => {
     const projectArray = projectModule.getProjectArray();
     const checkIfProjectNameAlreadyExists = _checkIfValueAlreadyExists(projectArray, projectInput.value);
 
@@ -408,11 +414,29 @@ const afterLoadDOMManipulationModule = (() => {
     } else if (projectInput.validity.tooShort) {
       projectInput.setCustomValidity('Project name too short. Minimum length is 1 character');
     } else if (projectInput.validity.tooLong) {
-      projectInput.setCustomValidity('Task name too long. Maximum length is 15 characters.');
+      projectInput.setCustomValidity('PRoject name too long. Maximum length is 15 characters.');
     } else if (checkIfProjectNameAlreadyExists) {
-      projectInput.setCustomValidity('Task already exists!');
+      projectInput.setCustomValidity('Project already exists!');
     } else {
-      projectInput.validity.valid = true;
+      projectInput.setCustomValidity('');
+    }
+  };
+
+  const _validateEditProjectForm = (projectInput) => {
+    const projectArray = projectModule.getProjectArray();
+    const checkIfProjectNameAlreadyExists = _checkIfValueAlreadyExists(projectArray, projectInput.value);
+
+    if (projectInput.validity.valueMissing) {
+      projectInput.setCustomValidity('Please enter name for project.');
+    } else if (projectInput.value === 'projectTitle') {
+      projectInput.setCustomValidity('Please enter valid name for project. projectInput is not a valid name');
+    } else if (projectInput.validity.tooShort) {
+      projectInput.setCustomValidity('Project name too short. Minimum length is 1 character');
+    } else if (projectInput.validity.tooLong) {
+      projectInput.setCustomValidity('PRoject name too long. Maximum length is 15 characters.');
+    } else if (checkIfProjectNameAlreadyExists) {
+      projectInput.setCustomValidity('Change the project Name!!');
+    } else {
       projectInput.setCustomValidity('');
     }
   };
@@ -474,13 +498,23 @@ const afterLoadDOMManipulationModule = (() => {
     dueDateInput.addEventListener('input', (e) => _validateDueDateInput(dueDateInput));
   };
 
-  const _createProjectSubmitHandler = (projectForm) => {
+  const _createNewProjectSubmitHandler = (projectForm) => {
     projectForm.addEventListener('submit', (e) => {
       if (!projectForm.checkValidity()) {
         e.preventDefault();
       } else {
-        _submitProjectData();
+        _submitNewProjectData();
         elementCreationOnLoadModule.refreshProjectButtonsDiv();
+      }
+    });
+  };
+
+  const _createEditProjectSubmitHandler = (projectForm, oldProjectObject) => {
+    projectForm.addEventListener('submit', (e) => {
+      if (!projectForm.checkValidity()) {
+        e.preventDefault();
+      } else {
+        _submitEditedProjectData(oldProjectObject);
       }
     });
   };
@@ -519,27 +553,41 @@ const afterLoadDOMManipulationModule = (() => {
     return inputValue;
   };
 
-  const _newProjectPopup = () => {
+  const _projectPopupFormGenerator = (defaultProjectTitle) => {
     elementFactory.modalInit();
-
+    const modalContent = document.getElementById('modal-content');
+    _contentResetter(modalContent);
     const projectForm = elementFactory.formFactory.cloneNode();
     const titleInput = elementFactory.inputFactory('text', 'Name', 'projectTitle', '');
     const projectSubmitButton = elementFactory.createSubmitInput();
 
-    const modalContent = document.getElementById('modal-content');
-
-    _contentResetter(modalContent);
-    elementFactory.appendChildrenToParentElement(projectForm, [titleInput, projectSubmitButton]);
-    modalContent.appendChild(projectForm);
-
     projectForm.id = 'projectForm';
     projectForm.for = 'project';
 
-    _validateProjectForm();
-    _createProjectSubmitHandler(projectForm);
+    elementFactory.appendChildrenToParentElement(projectForm, [titleInput, projectSubmitButton]);
+
+    return projectForm;
   };
 
-  const _submitProjectData = () => {
+  const _newProjectPopup = () => {
+    const projectForm = _projectPopupFormGenerator('');
+    const modalContent = document.getElementById('modal-content');
+    modalContent.appendChild(projectForm);
+    const projectInput = document.getElementById('projectTitle');
+    projectInput.addEventListener('input', (e) => _validateNewProjectForm(projectInput));
+    _createNewProjectSubmitHandler(projectForm);
+  };
+
+  const editProjectPopup = (projectObject) => {
+    const projectForm = _projectPopupFormGenerator(projectObject.title);
+    const modalContent = document.getElementById('modal-content');
+    modalContent.appendChild(projectForm);
+    const projectInput = document.getElementById('projectTitle');
+    projectInput.addEventListener('input', (e) => _validateEditProjectForm(projectInput));
+    _createEditProjectSubmitHandler(projectForm, projectObject);
+  };
+
+  const _submitNewProjectData = () => {
     const titleFromProjectForm = _getValueFromInput('projectForm', 'projectTitle');
 
     const newProject = projectModule.projectFactory(titleFromProjectForm);
@@ -548,12 +596,19 @@ const afterLoadDOMManipulationModule = (() => {
     elementFactory.deleteModal();
   };
 
+  const _submitEditedProjectData = (oldProject) => {
+    const titleFromProjectForm = _getValueFromInput('projectForm', 'projectTitle');
+
+    const editedProject = projectModule.projectFactory(titleFromProjectForm);
+    editProjectButton(oldProject, editedProject);
+
+    elementFactory.deleteModal();
+  };
+
   const _taskPopupFormGenerator = (defaultTitleValue, defaultDueDateValue, defaultPriorityValue, defaultProjectValue) => {
     elementFactory.modalInit();
-
     const modalContent = document.getElementById('modal-content');
     _contentResetter(modalContent);
-
     const projectArray = projectModule.getProjectArray();
     const projectTitles = projectArray.map((projectTitleValues) => projectTitleValues.title);
     const taskForm = elementFactory.formFactory.cloneNode();
@@ -771,6 +826,16 @@ const afterLoadDOMManipulationModule = (() => {
     updateTaskList();
   };
 
+  const editProjectButton = (oldProjectObject, newProjectObject) => {
+    projectModule.editObject(oldProjectObject, newProjectObject);
+    const oldProjectButton = document.getElementById(`${oldProjectObject.title}`);
+    const newProjectButton = elementCreationOnLoadModule.getCreateProjectButton(newProjectObject);
+    const parentElement = oldProjectButton.parentNode;
+    const parentElementOfParentElement = parentElement.parentNode;
+    parentElementOfParentElement.replaceChild(newProjectButton, parentElement);
+    updateTaskList();
+  };
+
   const deleteProjectButton = (projectObject) => {
     projectModule.deleteObject(projectObject);
     const projectButton = document.getElementById(`${projectObject.title}`);
@@ -791,6 +856,7 @@ const afterLoadDOMManipulationModule = (() => {
     generateTaskListOnClick,
     taskListInit,
     deleteProjectButton,
+    editProjectPopup,
   };
 })();
 

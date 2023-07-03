@@ -43,6 +43,17 @@ const projectModule = (() => {
     refreshProjectArray();
   };
 
+  const editObject = (oldObject, newObject) => {
+    const oldObjectindex = _findObjectIndex(_projectArray, oldObject);
+    const oldObjectTitle = oldObject.title;
+    const newObjectTitle = newObject.title;
+
+    taskModule.replaceInProjectValues(oldObjectTitle, newObjectTitle);
+    _projectArray.splice(oldObjectindex, 1, newObject);
+
+    refreshProjectArray();
+  };
+
   const projectArrayInit = () => {
     const storedArray = storageModule.getStoredProjectArray();
 
@@ -59,6 +70,7 @@ const projectModule = (() => {
     createNewProject,
     updateProjectArray,
     deleteObject,
+    editObject,
     projectArrayInit,
   };
 })();
