@@ -106,7 +106,6 @@ h2 {
 .project-and-edit-and-delete-button-div {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
     padding: 1rem;
 }
 
@@ -114,6 +113,10 @@ h2 {
 .project-and-delete-button-div > .svg > svg  {
     height: 2rem;
     width: 2rem;
+}
+
+.project-and-edit-and-delete-button-div > .svg:nth-child(2) {
+    margin-left: auto;
 }
 
 .project-and-edit-and-delete-button-div > .svg > svg {
